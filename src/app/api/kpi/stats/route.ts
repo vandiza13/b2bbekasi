@@ -241,6 +241,22 @@ export async function GET(req: NextRequest) {
       overallAchievement,
     };
 
+    if (qHsiData) {
+      summary.totalIndicators++;
+      if (qHsiData.status === 'ACHIEVED') summary.achievedCount++;
+      else summary.belowTargetCount++;
+    }
+
+    if (qDatinData) {
+      summary.totalIndicators++;
+      if (qDatinData.status === 'ACHIEVED') summary.achievedCount++;
+      else summary.belowTargetCount++;
+    }
+
+    summary.overallAchievement = summary.totalIndicators > 0 
+      ? Number(((summary.achievedCount / summary.totalIndicators) * 100).toFixed(2)) 
+      : 0;
+
     const response: StatsResponse = {
       period: formatPeriodDisplay(period),
       rawPeriod: period,
