@@ -176,8 +176,8 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white border border-slate-200 px-3 py-2 text-xs font-medium text-slate-500 shadow-sm">
-                DATIN + HSI + WIFI
+              <div className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-slate-500 shadow-sm">
+                DATIN + HSI + WIFI 
               </div>
             </div>
 
@@ -233,7 +233,7 @@ export default function DashboardPage() {
 
         {/* Footer */}
         <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-400">
-          Dashboard Branch Bekasi <span className="mx-1">•</span> TTR, Assurance & Quantity Performance Monitoring
+          Dashboard Branch Bekasi <span className="mx-1">•</span> TTR, Assurance & Quality Performance Monitoring
         </footer>
 
       </main>

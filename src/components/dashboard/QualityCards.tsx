@@ -51,10 +51,10 @@ export const QualityCards: React.FC<QualityCardsProps> = ({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">
-            Quantity Performance (Q-Index)
+            Quality Performance
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            Monitoring rasio gangguan terhadap list berbilled (semakin rendah semakin baik)
+            Monitoring Q HSI dan Q DATIN
           </p>
         </div>
 
@@ -126,7 +126,7 @@ function renderCard(
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Quantity Performance
+              Quality Performance
             </div>
             <h3 className="text-sm font-extrabold leading-5 text-slate-900">
               {title}
