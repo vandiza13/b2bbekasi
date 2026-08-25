@@ -155,7 +155,7 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
         isComply,
         reportedAt: t.reportedAt.toISOString(),
         resolvedAt: t.resolvedAt ? t.resolvedAt.toISOString() : null,
-        summary: t.summary || null,
+        summary: t.summary || undefined,
         workzone: getSalesAreaForSto(t.serviceAreaCode || 'BEK'),
       };
     });
