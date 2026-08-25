@@ -205,10 +205,6 @@ export default function DashboardPage() {
                   Monitoring kualitas tiket berdasarkan status GAUL
                 </p>
               </div>
-
-              <div className="rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-700">
-                Tidak GAUL / Total Tiket
-              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">

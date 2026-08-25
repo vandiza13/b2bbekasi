@@ -40,34 +40,57 @@ export const MetricCard: React.FC<MetricCardProps> = ({ metric, onOpenDetail }) 
 
       {/* PERFORMANCE */}
       <div className="px-5 py-5">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-              Real
+          <div className="mt-6 grid grid-cols-4 gap-4 sm:grid-cols-4">
+            <div className="col-span-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Real
+              </div>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-2xl font-extrabold tracking-tight text-slate-900">
+                  {metric.realRate.toFixed(2)}%
+                </span>
+              </div>
             </div>
-            <div className="mt-1 text-2xl font-extrabold text-slate-900">
-              {metric.realRate.toFixed(2)}%
-            </div>
-          </div>
 
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-              Target
+            <div className="col-span-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Target
+              </div>
+              <div className="mt-1 text-2xl font-extrabold text-blue-600">
+                {metric.targetRate.toFixed(2)}%
+              </div>
             </div>
-            <div className="mt-1 text-2xl font-extrabold text-blue-600">
-              {metric.targetRate.toFixed(2)}%
-            </div>
-          </div>
 
-          <div className="col-span-2 sm:col-span-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-              Total Tiket
-            </div>
-            <div className="mt-1 text-2xl font-extrabold text-slate-900">
-              {metric.totalTickets}
-            </div>
+            {metric.id.includes('ASR_GUARANTEE_') ? (
+              <>
+                <div className="col-span-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Tidak Gaul
+                  </div>
+                  <div className="mt-1 text-2xl font-extrabold text-emerald-600">
+                    {metric.achievedTickets}
+                  </div>
+                </div>
+                <div className="col-span-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Gaul
+                  </div>
+                  <div className="mt-1 text-2xl font-extrabold text-red-500">
+                    {metric.belowTargetTickets}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2 sm:col-span-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Total Tiket
+                </div>
+                <div className="mt-1 text-2xl font-extrabold text-slate-900">
+                  {metric.totalTickets}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
 
         {/* PROGRESS */}
         <div className="mt-5">
