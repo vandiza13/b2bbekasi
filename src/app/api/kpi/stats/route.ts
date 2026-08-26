@@ -241,20 +241,6 @@ export async function GET(req: NextRequest) {
       overallAchievement,
     };
 
-    if (qHsiData) {
-      summary.totalIndicators++;
-      const targetVal = parsePercent(qHsiData.target) || 0;
-      if (qHsiData.real <= targetVal) summary.achievedCount++;
-      else summary.belowTargetCount++;
-    }
-
-    if (qDatinData) {
-      summary.totalIndicators++;
-      const targetVal = parsePercent(qDatinData.target) || 0;
-      if (qDatinData.real <= targetVal) summary.achievedCount++;
-      else summary.belowTargetCount++;
-    }
-
     summary.overallAchievement = summary.totalIndicators > 0 
       ? Number(((summary.achievedCount / summary.totalIndicators) * 100).toFixed(2)) 
       : 0;
