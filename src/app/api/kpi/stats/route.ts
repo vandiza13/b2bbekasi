@@ -243,13 +243,15 @@ export async function GET(req: NextRequest) {
 
     if (qHsiData) {
       summary.totalIndicators++;
-      if (qHsiData.status === 'ACHIEVED') summary.achievedCount++;
+      const targetVal = parsePercent(qHsiData.target) || 0;
+      if (qHsiData.real <= targetVal) summary.achievedCount++;
       else summary.belowTargetCount++;
     }
 
     if (qDatinData) {
       summary.totalIndicators++;
-      if (qDatinData.status === 'ACHIEVED') summary.achievedCount++;
+      const targetVal = parsePercent(qDatinData.target) || 0;
+      if (qDatinData.real <= targetVal) summary.achievedCount++;
       else summary.belowTargetCount++;
     }
 
