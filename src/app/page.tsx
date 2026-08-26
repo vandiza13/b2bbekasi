@@ -92,7 +92,8 @@ export default function DashboardPage() {
   }, [data]);
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800">
+    <div className="min-h-screen text-slate-800">
+
       <Header
         period={period}
         onPeriodChange={handlePeriodChange}
@@ -101,44 +102,47 @@ export default function DashboardPage() {
         onRefresh={() => fetchStats(period)}
       />
 
-      <main className="mx-auto max-w-[1600px] px-4 py-6 lg:px-8 lg:py-8">
-        
+      <main className="mx-auto max-w-[1600px] px-4 py-8 lg:px-8 lg:py-10">
+
         {error && (
-          <div className="mb-6 flex items-center justify-between p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="mb-6 flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-card">
             <div className="flex items-center gap-2.5">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+              <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
               <span>{error}</span>
             </div>
             <button
               onClick={() => fetchStats(period)}
-              className="px-3 py-1 bg-red-100 hover:bg-red-200 rounded-lg text-xs font-semibold text-red-800 cursor-pointer"
+              className="cursor-pointer rounded-lg bg-red-100 px-3 py-1 text-xs font-semibold text-red-800 transition hover:bg-red-200"
             >
               Coba Lagi
             </button>
           </div>
         )}
 
-        <section className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+        <section className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 shadow-card">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-600"></span>
+              </span>
               Branch Bekasi Monitoring
             </div>
 
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-[26px] font-extrabold tracking-tight text-slate-900 sm:text-3xl">
               Performance Dashboard
             </h1>
 
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">
+            <p className="mt-1.5 max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
               Monitoring TTR Performance, Assurance Guarantee, dan Quantity Performance berdasarkan Service Area.
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-card shrink-0">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="shrink-0 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-card">
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Update Data
             </div>
-            <div className="mt-1 text-sm font-bold text-slate-800">
+            <div className="mt-0.5 text-sm font-extrabold tracking-tight text-slate-800">
               {data?.period || 'Loading...'}
             </div>
           </div>
@@ -149,26 +153,26 @@ export default function DashboardPage() {
         )}
 
         {isLoading && !data && (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 my-8 shadow-card">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
+          <div className="my-10 flex flex-col items-center justify-center rounded-2xl border border-slate-200/80 bg-white py-20 shadow-card">
+            <Loader2 className="mb-3 h-8 w-8 animate-spin text-blue-600" />
             <div className="text-xs font-semibold text-slate-500">Memuat data KPI...</div>
           </div>
         )}
 
         {ttrMetrics.length > 0 && (
           <section className="mb-10">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-end justify-between">
               <div>
-                <h2 className="text-lg font-extrabold text-slate-900">
+                <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
                   TTR Performance
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs font-medium text-slate-500">
                   Compliance berdasarkan indikator TTR
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white px-3 py-2 text-xs font-medium text-slate-500 shadow-sm">
-                DATIN + HSI + WIFI 
+              <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 ring-1 ring-inset ring-slate-200">
+                DATIN · HSI · WIFI
               </div>
             </div>
 
@@ -186,14 +190,18 @@ export default function DashboardPage() {
 
         {assuranceMetrics.length > 0 && (
           <section className="mb-10">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-end justify-between">
               <div>
-                <h2 className="text-lg font-extrabold text-slate-900">
+                <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
                   Assurance Guarantee
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs font-medium text-slate-500">
                   Monitoring kualitas tiket berdasarkan status GAUL
                 </p>
+              </div>
+
+              <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 ring-1 ring-inset ring-slate-200">
+                Non-Garansi Valid
               </div>
             </div>
 
@@ -220,8 +228,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-400">
-          Dashboard Branch Bekasi <span className="mx-1">•</span> TTR, Assurance & Quality Performance Monitoring
+        <footer className="border-t border-slate-200/80 py-6 text-center text-xs font-medium text-slate-400">
+          Dashboard Branch Bekasi <span className="mx-1 text-slate-300">•</span> TTR, Assurance &amp; Quality Performance Monitoring
         </footer>
 
       </main>

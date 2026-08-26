@@ -48,18 +48,18 @@ export const QualityCards: React.FC<QualityCardsProps> = ({
 
   return (
     <section className="mb-10">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-end justify-between">
         <div>
-          <h2 className="text-lg font-extrabold text-slate-900">
+          <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
             Quality Performance
           </h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs font-medium text-slate-500">
             Monitoring Q HSI dan Q DATIN
           </p>
         </div>
 
-        <div className="rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2 text-xs font-semibold text-indigo-700">
-          Q HSI + Q DATIN
+        <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-400 ring-1 ring-inset ring-indigo-100">
+          Q HSI · Q DATIN
         </div>
       </div>
 
@@ -93,15 +93,17 @@ function renderCard(
   const status = achieved
     ? {
         label: 'ACHIEVED',
-        badge: 'bg-emerald-50 text-emerald-700',
-        bar: 'bg-emerald-500',
+        badge: 'bg-emerald-50 text-emerald-700 ring-emerald-600/10',
+        dot: 'bg-emerald-500',
+        bar: 'bg-gradient-to-r from-emerald-400 to-emerald-500',
         color: 'text-emerald-600',
       }
     : {
         label: 'BELOW TARGET',
-        badge: 'bg-red-50 text-red-700',
-        bar: 'bg-red-500',
-        color: 'text-red-600',
+        badge: 'bg-red-50 text-red-600 ring-red-500/10',
+        dot: 'bg-red-500',
+        bar: 'bg-gradient-to-r from-red-400 to-red-500',
+        color: 'text-red-500',
       };
 
   let progress = 0;
@@ -118,71 +120,72 @@ function renderCard(
   return (
     <div
       key={title}
-      className="dashboard-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card"
+      className="dashboard-card overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card"
     >
       <div className="border-b border-slate-100 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Quality Performance
             </div>
-            <h3 className="text-sm font-extrabold leading-5 text-slate-900">
+            <h3 className="text-sm font-bold leading-5 tracking-tight text-slate-900">
               {title}
             </h3>
           </div>
 
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${status.badge}`}>
+          <span className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${status.badge}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
             {status.label}
           </span>
         </div>
       </div>
 
       <div className="px-5 py-5">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-4 sm:grid-cols-3">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
               Real
             </div>
-            <div className={`mt-1 text-2xl font-extrabold ${status.color}`}>
+            <div className={`mt-1.5 text-[26px] font-extrabold leading-none tracking-tight ${status.color}`}>
               {real.toFixed(2)}%
             </div>
           </div>
 
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
               Target
             </div>
-            <div className="mt-1 text-2xl font-extrabold text-blue-600">
+            <div className="mt-1.5 text-[26px] font-extrabold leading-none tracking-tight text-blue-600">
               {typeof item.target === 'number' ? `${item.target.toFixed(2)}%` : String(item.target)}
             </div>
           </div>
 
-          <div className="col-span-2 sm:col-span-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
               Total Tiket
             </div>
-            <div className="mt-1 text-2xl font-extrabold text-slate-900">
+            <div className="mt-1.5 text-[26px] font-extrabold leading-none tracking-tight text-slate-900">
               {total}
             </div>
           </div>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-6">
           <div className="mb-2 flex justify-between text-[10px] font-semibold text-slate-400">
             <span>Achievement</span>
             <span>{progress.toFixed(0)}%</span>
           </div>
 
-          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/60">
             <div
-              className={`h-full rounded-full ${status.bar} transition-all`}
-              style={{ width: `${progress}%` }}
+              className={`h-full rounded-full transition-all duration-500 ${status.bar}`}
+              style={{ width: `${Math.max(2, progress)}%` }}
             ></div>
           </div>
         </div>
 
         <div className="mt-5">
-          <div className="mb-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+          <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
             Weekly
           </div>
 
@@ -191,7 +194,7 @@ function renderCard(
               const weekData = item.weeks?.[weekName] || { q: 0, real: 0, totalTiket: 0, listBilled: 0 };
               const qVal = Number(weekData.q ?? weekData.real ?? 0);
               const wAchieved = targetNum > 0 ? qVal <= targetNum : true;
-              const valueColor = wAchieved ? 'text-emerald-600' : 'text-red-600';
+              const valueColor = wAchieved ? 'text-emerald-600' : 'text-red-500';
               const bgColor = wAchieved ? 'bg-emerald-50' : 'bg-red-50';
 
               return (
@@ -199,16 +202,16 @@ function renderCard(
                   key={weekName}
                   type="button"
                   onClick={() => onOpenWeeklyModal?.(item, weekName)}
-                  className={`group rounded-xl border border-slate-100 ${bgColor} px-2 py-3 text-center transition hover:ring-2 hover:ring-blue-200 hover:bg-blue-50 active:scale-95 cursor-pointer`}
+                  className={`group cursor-pointer rounded-xl border border-transparent ${bgColor} px-2 py-3 text-center transition hover:bg-blue-50 hover:ring-2 hover:ring-blue-200 active:scale-95`}
                   title={`Lihat tiket ${weekName}`}
                 >
                   <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 group-hover:text-blue-600">
                     {weekName}
                   </div>
-                  <div className={`mt-1 text-lg font-extrabold ${valueColor}`}>
+                  <div className={`mt-1 text-base font-extrabold tracking-tight ${valueColor}`}>
                     {qVal.toFixed(2)}%
                   </div>
-                  <div className="mt-1 text-[9px] font-semibold text-slate-400 group-hover:text-blue-600">
+                  <div className="mt-0.5 text-[9px] font-medium text-slate-400 group-hover:text-blue-600">
                     {weekData.totalTiket || 0} tiket
                   </div>
                 </button>
@@ -221,7 +224,7 @@ function renderCard(
           <button
             type="button"
             onClick={() => onOpenModal?.(item, title)}
-            className="w-full rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-blue-700 cursor-pointer"
+            className="w-full cursor-pointer rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-600"
           >
             Lihat Detail Tiket
           </button>

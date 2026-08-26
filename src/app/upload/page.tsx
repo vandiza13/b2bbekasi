@@ -2,11 +2,11 @@
 
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface FileCategoryItem {
   id: string;
   category: string;
-  icon: string;
   label: string;
 }
 
@@ -17,15 +17,15 @@ interface LogItem {
 }
 
 const FILE_CATEGORIES: FileCategoryItem[] = [
-  { id: 'fileHSI', category: 'HSI', icon: '📡', label: 'HSI' },
-  { id: 'fileDATIN', category: 'DATIN', icon: '🌐', label: 'DATIN' },
-  { id: 'fileSIPTRUNK', category: 'SIP TRUNK', icon: '☎️', label: 'SIP TRUNK' },
-  { id: 'fileDWDM', category: 'DWDM', icon: '🔦', label: 'DWDM' },
-  { id: 'fileWIFI', category: 'WIFI', icon: '📶', label: 'WIFI' },
-  { id: 'fileSQMHSI', category: 'SQM HSI', icon: '📈', label: 'SQM HSI' },
-  { id: 'fileSQMDATIN', category: 'SQM DATIN', icon: '📊', label: 'SQM DATIN' },
-  { id: 'fileQHSI', category: 'Q HSI', icon: '📝', label: 'Q HSI' },
-  { id: 'fileQDATIN', category: 'Q DATIN', icon: '📝', label: 'Q DATIN' },
+  { id: 'fileHSI', category: 'HSI', label: 'HSI' },
+  { id: 'fileDATIN', category: 'DATIN', label: 'DATIN' },
+  { id: 'fileSIPTRUNK', category: 'SIP TRUNK', label: 'SIP TRUNK' },
+  { id: 'fileDWDM', category: 'DWDM', label: 'DWDM' },
+  { id: 'fileWIFI', category: 'WIFI', label: 'WIFI' },
+  { id: 'fileSQMHSI', category: 'SQM HSI', label: 'SQM HSI' },
+  { id: 'fileSQMDATIN', category: 'SQM DATIN', label: 'SQM DATIN' },
+  { id: 'fileQHSI', category: 'Q HSI', label: 'Q HSI' },
+  { id: 'fileQDATIN', category: 'Q DATIN', label: 'Q DATIN' },
 ];
 
 export default function UploadPage() {
@@ -71,7 +71,7 @@ export default function UploadPage() {
     const categoriesToUpload = Object.keys(selectedFiles).filter((cat) => selectedFiles[cat]);
 
     if (categoriesToUpload.length === 0) {
-      alert('⚠️ Pilih minimal satu file Excel');
+      alert('Pilih minimal satu file Excel');
       return;
     }
 
@@ -92,7 +92,7 @@ export default function UploadPage() {
 
       const currentPercent = Math.round(((i) / total) * 100);
       setProgressPercent(currentPercent);
-      setProgressText(`🔄 ${file.name}\n📁 Kategori : ${cat}\n📊 ${current}/${total}\n📦 Antrian : ${queueLength} file`);
+      setProgressText(`${file.name}\nKategori : ${cat}\nProgres ${current}/${total} · Antrian: ${queueLength} file`);
       addLog(`[${current}/${total}] Mengunggah & membaca ${file.name} (${cat})...`, 'process');
 
       try {
@@ -112,50 +112,52 @@ export default function UploadPage() {
         }
 
         successCount++;
-        addLog(`✅ Berhasil memproses ${data.processedRows} baris untuk ${cat} (${data.period}) dalam ${data.executionTimeMs}ms`, 'success');
+        addLog(`Berhasil memproses ${data.processedRows} baris untuk ${cat} (${data.period}) dalam ${data.executionTimeMs}ms`, 'success');
       } catch (err) {
-        addLog(`❌ Gagal memproses ${cat}: ${(err as Error).message}`, 'error');
+        addLog(`Gagal memproses ${cat}: ${(err as Error).message}`, 'error');
       }
     }
 
     setProgressPercent(100);
-    setProgressText('✅ Semua proses selesai');
-    addLog(`🎉 Seluruh antrian selesai diproses: ${successCount} berhasil dari ${total} file.`, 'success');
+    setProgressText('Semua proses selesai');
+    addLog(`Seluruh antrian selesai diproses: ${successCount} berhasil dari ${total} file.`, 'success');
     setIsProcessing(false);
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-100 via-gray-100 to-blue-200 min-h-screen flex items-center justify-center p-5">
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-5xl p-8">
-        
-        <div className="flex items-center justify-between mb-6">
+    <div className="flex min-h-screen items-center justify-center p-5">
+      <div className="w-full max-w-5xl rounded-3xl border border-slate-200/80 bg-white p-8 shadow-card">
+
+        <div className="mb-7 flex items-center justify-between">
           <Link
             href="/"
-            className="text-blue-600 hover:text-blue-800 font-semibold text-sm flex items-center gap-1.5 transition"
+            className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
           >
-            ← Kembali ke Dashboard
+            <ArrowLeft className="h-4 w-4" />
+            Kembali ke Dashboard
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-center text-gray-700">
-          📊 Upload File Excel
+        <h1 className="text-center text-2xl font-extrabold tracking-tight text-slate-900">
+          Upload File Excel
         </h1>
 
-        <p className="text-center text-gray-500 mt-2 mb-8 text-sm">
+        <p className="mx-auto mt-2 mb-8 max-w-md text-center text-sm font-medium text-slate-500">
           Pilih file sesuai kategori. Sistem akan memproses otomatis sesuai antrian.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {FILE_CATEGORIES.map((item) => {
             const hasFile = Boolean(selectedFiles[item.category]);
             return (
               <div key={item.id} className="upload-card">
                 <label>
                   <div className="title flex items-center justify-between">
-                    <span>{item.icon} {item.label}</span>
+                    <span>{item.label}</span>
                     {hasFile && (
-                      <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                        ✓ Terpilih
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Terpilih
                       </span>
                     )}
                   </div>
@@ -180,28 +182,28 @@ export default function UploadPage() {
           type="button"
           onClick={handleUploadAll}
           disabled={isProcessing}
-          className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="mt-8 w-full cursor-pointer rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:from-blue-500 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
-          {isProcessing ? '⏳ Sedang Memproses Antrian...' : '🚀 Upload & Proses Semua'}
+          {isProcessing ? 'Sedang Memproses Antrian...' : 'Upload & Proses Semua'}
         </button>
 
         {showProgress && (
-          <div id="progressContainer" className="mt-8">
-            <div className="flex justify-between mb-2">
-              <span className="font-semibold text-gray-700">⚙️ Progress</span>
-              <span id="progressPercent" className="text-blue-600 text-sm font-bold">
+          <div id="progressContainer" className="mt-8 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-5">
+            <div className="mb-2 flex justify-between">
+              <span className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">Progress</span>
+              <span id="progressPercent" className="text-sm font-extrabold tracking-tight text-blue-600">
                 {progressPercent}%
               </span>
             </div>
 
-            <p id="progressText" className="text-sm text-gray-600 mb-3 whitespace-pre-line font-medium">
+            <p id="progressText" className="mb-3 whitespace-pre-line text-xs font-medium leading-relaxed text-slate-600">
               {progressText}
             </p>
 
-            <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-200/70 ring-1 ring-inset ring-slate-200">
               <div
                 id="progressBar"
-                className="bg-gradient-to-r from-blue-500 to-blue-700 h-full transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -209,12 +211,12 @@ export default function UploadPage() {
         )}
 
         <div id="logSection" className="mt-8">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-gray-700">🧾 Log Proses</h3>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">Log Proses</h3>
             <button
               type="button"
               onClick={clearLogs}
-              className="text-xs text-red-500 hover:text-red-700 font-semibold cursor-pointer"
+              className="cursor-pointer text-xs font-bold text-red-500 transition hover:text-red-700"
             >
               Hapus
             </button>
@@ -223,12 +225,12 @@ export default function UploadPage() {
           <div
             id="logArea"
             ref={logAreaRef}
-            className="bg-gray-900 text-gray-200 rounded-xl p-4 h-72 overflow-y-auto font-mono text-xs space-y-1"
+            className="h-72 space-y-1 overflow-y-auto rounded-2xl bg-slate-950 p-4 font-mono text-xs text-slate-300 ring-1 ring-inset ring-slate-900"
           >
             {logs.map((log, idx) => {
-              let color = 'text-gray-200';
-              if (log.type === 'success') color = 'text-green-400';
-              if (log.type === 'process') color = 'text-yellow-400';
+              let color = 'text-slate-300';
+              if (log.type === 'success') color = 'text-emerald-400';
+              if (log.type === 'process') color = 'text-amber-300';
               if (log.type === 'error') color = 'text-red-400';
 
               return (
@@ -246,45 +248,49 @@ export default function UploadPage() {
         .upload-card label {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 14px;
           background: #f8fafc;
-          border: 2px dashed #cbd5e1;
+          border: 1px solid #e2e8f0;
           padding: 18px;
-          border-radius: 20px;
+          border-radius: 18px;
           cursor: pointer;
-          transition: 0.25s;
+          transition: all 0.25s ease;
         }
 
         .upload-card label:hover {
           background: #eff6ff;
-          border-color: #2563eb;
+          border-color: #93c5fd;
+          box-shadow: 0 8px 28px -6px rgba(37, 99, 235, 0.15);
           transform: translateY(-2px);
         }
 
         .title {
-          font-size: 16px;
+          font-size: 13px;
           font-weight: 700;
-          color: #374151;
+          letter-spacing: 0.02em;
+          color: #334155;
         }
 
         .upload-card input {
-          font-size: 13px;
-          color: #6b7280;
+          font-size: 12px;
+          color: #64748b;
         }
 
         .upload-card input::file-selector-button {
-          background: #2563eb;
+          background: linear-gradient(to bottom, #2563eb, #1d4ed8);
           color: white;
           border: none;
           padding: 7px 14px;
           border-radius: 10px;
+          font-weight: 600;
+          font-size: 12px;
           cursor: pointer;
           margin-right: 10px;
-          transition: background 0.2s;
+          transition: all 0.2s;
         }
 
         .upload-card input::file-selector-button:hover {
-          background: #1d4ed8;
+          background: linear-gradient(to bottom, #3b82f6, #2563eb);
         }
       `}</style>
     </div>
