@@ -22,6 +22,13 @@ function safeEqual(a: string, b: string): boolean {
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+
+  if (attempts.size > 1000) {
+    for (const [key, entry] of attempts) {
+      if (entry.resetAt < now) attempts.delete(key);
+    }
+  }
+
   const entry = attempts.get(ip);
   if (!entry || entry.resetAt < now) {
     attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });

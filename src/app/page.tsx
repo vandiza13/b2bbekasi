@@ -97,7 +97,6 @@ export default function DashboardPage() {
       <Header
         period={period}
         onPeriodChange={handlePeriodChange}
-        onOpenUpload={() => {}}
         isLoading={isLoading}
         onRefresh={() => fetchStats(period)}
       />

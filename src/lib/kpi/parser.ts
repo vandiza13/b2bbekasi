@@ -99,11 +99,30 @@ export function parseExcelRowsUniversally(
   const parsedRows: ParsedRowResult[] = [];
   let detectedPeriod = explicitPeriod || '';
 
+  // 1. Pass 1: Pre-calculate Service No frequencies (COUNTIF) for Assurance Guarantee
+  const sidCounts = new Map<string, number>();
+  for (let r = 0; r < dataRows.length; r++) {
+    const row = dataRows[r];
+    if (!row || row.length === 0) continue;
+    let sid: string | undefined = undefined;
+    if (category === 'DATIN' || category === 'HSI') {
+      sid = String(row[11] || '').trim();
+    } else if (category === 'WIFI') {
+      sid = String(row[10] || '').trim();
+    } else if (category === 'SIP TRUNK' || category === 'DWDM') {
+      sid = String(row[12] || row[11] || '').trim();
+    }
+    if (sid && sid !== '-' && sid.toLowerCase() !== 'null') {
+      sidCounts.set(sid, (sidCounts.get(sid) || 0) + 1);
+    }
+  }
+
+  // 2. Pass 2: Parse rows with strict STO filtering matching GAS
   for (let r = 0; r < dataRows.length; r++) {
     const row = dataRows[r];
     if (!row || row.length === 0) continue;
 
-    // Kolom tetap mengikuti struktur export Insera pada perhitungan_V3.gs
+    // Kolom tetap mengikuti struktur export Insera pada perhitungan_V3.js (GAS)
     let rawId: unknown = undefined;
     let rawSto: unknown = undefined;
     let rawCust: unknown = undefined;
@@ -113,45 +132,60 @@ export function parseExcelRowsUniversally(
     let rawGaul: unknown = undefined;
     let rawKategori: unknown = undefined;
     let rawComply: unknown = undefined;
+    let rawComply24: unknown = undefined;
 
-    if (category === 'DATIN' || category === 'SIP TRUNK' || category === 'DWDM') {
-      rawId = row[0] || (idCol !== -1 ? row[idCol] : undefined);
+    if (category === 'SIP TRUNK' || category === 'DWDM') {
+      rawId = row[1] || row[0] || (idCol !== -1 ? row[idCol] : undefined);
       rawCust = row[2] || (custCol !== -1 ? row[custCol] : undefined);
-      rawSid = row[11] || (serviceIdCol !== -1 ? row[serviceIdCol] : undefined);
-      rawTtr = row[25] || (ttrCol !== -1 ? row[ttrCol] : undefined);
-      rawSto = row[36] || (stoCol !== -1 ? row[stoCol] : undefined);
-      rawKategori = row[64] || (kategoriCol !== -1 ? row[kategoriCol] : undefined);
+      rawSid = row[12] || row[11] || (serviceIdCol !== -1 ? row[serviceIdCol] : undefined);
+      rawSto = row[35] || (stoCol !== -1 ? row[stoCol] : undefined);
+      rawTtr = row[54] || row[53] || (ttrCol !== -1 ? row[ttrCol] : undefined);
+      rawDate = row[18] || row[59] || (dateCol !== -1 ? row[dateCol] : undefined);
+      rawComply = row[52];
+    } else if (category === 'DATIN') {
+      // GAS: colTiket=0, colCustomer=2, colSid=11, colTtr=25, colWorkzone=36, colKategori=64, colComply=67, colTanggal=73, colGaul=75
+      rawId = row[0];
+      rawCust = row[2];
+      rawSid = row[11];
+      rawTtr = row[25];
+      rawSto = row[36];
+      rawKategori = row[64];
       rawComply = row[67];
-      rawDate = row[73] || (dateCol !== -1 ? row[dateCol] : undefined);
-      rawGaul = row[75] || (gaulCol !== -1 ? row[gaulCol] : undefined);
+      rawDate = row[73];
+      rawGaul = row[75];
     } else if (category === 'HSI') {
-      rawId = row[0] || (idCol !== -1 ? row[idCol] : undefined);
-      rawCust = row[2] || (custCol !== -1 ? row[custCol] : undefined);
-      rawSid = row[11] || (serviceIdCol !== -1 ? row[serviceIdCol] : undefined);
-      rawSto = row[41] || (stoCol !== -1 ? row[stoCol] : undefined);
-      rawTtr = row[88] || (ttrCol !== -1 ? row[ttrCol] : undefined);
-      rawDate = row[97] || (dateCol !== -1 ? row[dateCol] : undefined);
-      rawGaul = row[102] || (gaulCol !== -1 ? row[gaulCol] : undefined);
+      // GAS: colTiket=0, colSid=11, colCustomer=2, colWorkzone=41, colTtr=88, colComply_4=89, colComply_24=90, colTanggal=97, colGaul=102
+      rawId = row[0];
+      rawCust = row[2];
+      rawSid = row[11];
+      rawSto = row[41];
+      rawTtr = row[88];
       rawComply = row[89];
+      rawComply24 = row[90];
+      rawDate = row[97];
+      rawGaul = row[102];
     } else if (category === 'WIFI') {
-      rawId = row[0] || (idCol !== -1 ? row[idCol] : undefined);
-      rawCust = row[1] || (custCol !== -1 ? row[custCol] : undefined);
-      rawSid = row[10] || (serviceIdCol !== -1 ? row[serviceIdCol] : undefined);
-      rawDate = row[21] || (dateCol !== -1 ? row[dateCol] : undefined);
-      rawSto = row[23] || (stoCol !== -1 ? row[stoCol] : undefined);
-      rawTtr = row[33] || (ttrCol !== -1 ? row[ttrCol] : undefined);
-      rawGaul = row[36] || (gaulCol !== -1 ? row[gaulCol] : undefined);
+      // GAS: colIncident=0, colCust=1, colService=10, colTanggal=21, colWorkzone=23, colTtr=33, colGaul=36, colComply=41
+      rawId = row[0];
+      rawCust = row[1];
+      rawSid = row[10];
+      rawDate = row[21];
+      rawSto = row[23];
+      rawTtr = row[33];
+      rawGaul = row[36];
       rawComply = row[41];
     } else if (category === 'Q HSI') {
-      rawId = row[0] || (idCol !== -1 ? row[idCol] : undefined);
-      rawCust = row[1] || (custCol !== -1 ? row[custCol] : undefined);
-      rawDate = row[2] || (dateCol !== -1 ? row[dateCol] : undefined);
-      rawSto = row[20] || (stoCol !== -1 ? row[stoCol] : undefined);
+      // GAS: colTiket=0, colCust=1, colTanggal=2, colSto=20
+      rawId = row[0];
+      rawCust = row[1];
+      rawDate = row[2];
+      rawSto = row[20];
     } else if (category === 'Q DATIN') {
-      rawId = row[9] || row[0] || (idCol !== -1 ? row[idCol] : undefined);
-      rawCust = row[1] || (custCol !== -1 ? row[custCol] : undefined);
-      rawDate = row[12] || (dateCol !== -1 ? row[dateCol] : undefined);
-      rawSto = row[27] || (stoCol !== -1 ? row[stoCol] : undefined);
+      // GAS: colTiket=9, colCust=1, colTanggal=12, colSto=27
+      rawId = row[9] || row[0];
+      rawCust = row[1];
+      rawDate = row[12];
+      rawSto = row[27];
     } else if (category === 'SQM HSI' || category === 'SQM DATIN') {
       rawId = (idCol !== -1 ? row[idCol] : undefined) || row[0];
       rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[2];
@@ -181,17 +215,8 @@ export function parseExcelRowsUniversally(
       continue;
     }
 
-    let serviceAreaCode = normalizeSTO(rawSto);
-    if (!serviceAreaCode) {
-      for (let c = 0; c < Math.min(10, row.length); c++) {
-        const check = normalizeSTO(row[c]);
-        if (check) {
-          serviceAreaCode = check;
-          break;
-        }
-      }
-    }
-
+    // Filter STO ketat: Hanya STO yang masuk ke Branch Bekasi (SA_MAPPING) yang diproses, persis GAS
+    const serviceAreaCode = normalizeSTO(rawSto);
     if (!serviceAreaCode) {
       continue;
     }
@@ -220,8 +245,15 @@ export function parseExcelRowsUniversally(
     const rawStatus = statusCol !== -1 ? row[statusCol] : undefined;
     const status = rawStatus ? String(rawStatus).trim().toUpperCase() : 'CLOSED';
 
-    const gaulStr = String(rawGaul || '').trim().toUpperCase();
-    const isGaul = gaulStr === 'GAUL';
+    // Penentuan status GAUL secara dinamis matching formula Google Sheets GAS: =IF(COUNTIF(...) = 1, "Tidak Gaul", "Gaul")
+    const rawGaulStr = String(rawGaul || '').trim().toUpperCase();
+    let isGaul = false;
+    if (serviceId && sidCounts.has(serviceId)) {
+      const count = sidCounts.get(serviceId) || 1;
+      isGaul = count > 1;
+    } else if (rawGaulStr !== '') {
+      isGaul = rawGaulStr === 'GAUL';
+    }
 
     let subCategory = rawKategori ? String(rawKategori).trim().toUpperCase() : null;
     if (!subCategory && summary) {
@@ -233,20 +265,23 @@ export function parseExcelRowsUniversally(
     const rawPayload: Record<string, unknown> = {
       subCategory,
       kategori: subCategory,
-      col_64: row[64],
+      col_64: row[64] || rawKategori,
       col_67: row[67] || rawComply,
-      col_89: row[89],
-      col_90: row[90],
-      col_41: row[41],
-      col_75: row[75] || rawGaul,
-      col_102: row[102] || rawGaul,
-      col_36: row[36] || (category === 'WIFI' ? rawGaul : rawSto),
+      col_52: rawComply,
+      col_89: row[89] || rawComply,
+      col_90: row[90] || rawComply24,
+      col_41: row[41] || (category === 'WIFI' ? rawComply : rawSto),
+      col_75: isGaul ? 'GAUL' : 'TIDAK GAUL',
+      col_102: isGaul ? 'GAUL' : 'TIDAK GAUL',
+      col_36: isGaul ? 'GAUL' : 'TIDAK GAUL',
       col_23: row[23],
       col_20: row[20],
       col_27: row[27],
       workzone: rawSto,
-      gaul: rawGaul,
+      gaul: isGaul ? 'GAUL' : 'TIDAK GAUL',
       comply: rawComply,
+      comply_4jam: row[89] || rawComply,
+      comply_24jam: row[90] || rawComply24,
     };
 
     for (let c = 0; c < row.length; c++) {

@@ -15,6 +15,35 @@ export const MASTER_STOS = [
   'BEK', 'KLB', 'KRA', 'PKY', 'PDE', 'DEP', 'CNE', 'PCM', 'SKJ', 'CSL'
 ];
 
+// Master List Berbilled resmi dari Dashboard Branch Bekasi (GAS)
+export const LIST_BILLED_DATIN_STOS: Record<string, number> = {
+  BEK: 250,
+  KRA: 508,
+  KLB: 227,
+  PKY: 387,
+  PDE: 286,
+  DEP: 257,
+  CSL: 74,
+  PCM: 64,
+  SKJ: 76,
+  CNE: 91,
+};
+export const TOTAL_LIST_BILLED_DATIN = 2220;
+
+export const LIST_BILLED_HSI_STOS: Record<string, number> = {
+  BEK: 1978,
+  KRA: 2667,
+  KLB: 1785,
+  PKY: 2743,
+  PDE: 1402,
+  DEP: 1446,
+  CSL: 352,
+  PCM: 355,
+  SKJ: 1024,
+  CNE: 568,
+};
+export const TOTAL_LIST_BILLED_HSI = 14320;
+
 export function getSalesAreaForSto(sto: string): string {
   const norm = sto.trim().toUpperCase();
   for (const [sa, stos] of Object.entries(SA_MAPPING)) {
@@ -23,6 +52,11 @@ export function getSalesAreaForSto(sto: string): string {
     }
   }
   return 'Bekasi';
+}
+
+export function isValidBranchSto(sto: string): boolean {
+  const norm = sto.trim().toUpperCase();
+  return MASTER_STOS.includes(norm);
 }
 
 export const INDICATORS: IndicatorDefinition[] = [

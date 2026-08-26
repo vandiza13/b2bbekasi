@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { KpiMetric } from '@/types/kpi';
 
 export interface QualityData {
   indicator: string;

@@ -1,28 +1,39 @@
 import { google } from 'googleapis';
 import { KpiMetric, KpiSummary } from '@/types/kpi';
 
+export function getSheetsClient() {
+  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY
+    ?.replace(/^"+|"+$/g, '')
+    .replace(/\\n/g, '\n')
+    .replace(/\r/g, '')
+    .trim();
+
+  if (!spreadsheetId || !clientEmail || !privateKey) return null;
+
+  const auth = new google.auth.JWT({
+    email: clientEmail,
+    key: privateKey,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  return { sheets: google.sheets({ version: 'v4', auth }), spreadsheetId };
+}
+
 export async function syncKpiToGoogleSheets(
   period: string,
   summary: KpiSummary,
   metrics: KpiMetric[]
 ): Promise<{ success: boolean; message?: string }> {
-  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (!spreadsheetId || !clientEmail || !privateKey) {
+  const client = getSheetsClient();
+  if (!client) {
     console.log('[SheetsSync] Google Sheets credentials not configured. Skipping sync.');
     return { success: true, message: 'Google Sheets sync skipped (not configured).' };
   }
+  const { sheets, spreadsheetId } = client;
 
   try {
-    const auth = new google.auth.JWT({
-      email: clientEmail,
-      key: privateKey,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-
-    const sheets = google.sheets({ version: 'v4', auth });
 
     const rows = [
       ['KPI BGES BEKASI - BACKUP SNAPSHOT', `Period: ${period}`, `Timestamp: ${new Date().toISOString()}`],

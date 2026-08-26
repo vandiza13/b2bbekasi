@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react';
 
 interface FileCategoryItem {
   id: string;
@@ -14,6 +14,18 @@ interface LogItem {
   time: string;
   message: string;
   type: 'success' | 'process' | 'error' | 'info';
+}
+
+interface SyncJobRow {
+  id: string;
+  category: string;
+  targetSheet: string;
+  period: string;
+  status: 'pending' | 'running' | 'done' | 'failed';
+  rowsTotal: number | null;
+  rowsDone: number | null;
+  attempts: number | null;
+  error: string | null;
 }
 
 const FILE_CATEGORIES: FileCategoryItem[] = [
@@ -44,6 +56,43 @@ export default function UploadPage() {
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const logAreaRef = useRef<HTMLDivElement>(null);
+  const [syncJobs, setSyncJobs] = useState<SyncJobRow[]>([]);
+  const [syncPolling, setSyncPolling] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!syncPolling) return;
+    let stopped = false;
+    const tick = async () => {
+      try {
+        const res = await fetch('/api/sheets/sync');
+        const data = await res.json();
+        if (stopped || !data?.success) return;
+        const jobs: SyncJobRow[] = data.jobs || [];
+        setSyncJobs(jobs);
+        const active = jobs.some(j => j.status === 'pending' || j.status === 'running');
+        if (!active) setSyncPolling(false);
+      } catch {
+        // biarkan poll berikutnya mencoba lagi
+      }
+    };
+    const timer = setInterval(tick, 2500);
+    void tick();
+    return () => { stopped = true; clearInterval(timer); };
+  }, [syncPolling]);
+
+  const retrySync = async (category: string) => {
+    addLog(`Menjadwalkan ulang mirror spreadsheet untuk ${category}...`, 'process');
+    try {
+      await fetch('/api/sheets/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category }),
+      });
+      setSyncPolling(true);
+    } catch {
+      addLog(`Gagal menjadwalkan ulang mirror ${category}.`, 'error');
+    }
+  };
 
   const addLog = (message: string, type: 'success' | 'process' | 'error' | 'info' = 'info') => {
     const time = new Date().toLocaleTimeString('id-ID');
@@ -122,6 +171,8 @@ export default function UploadPage() {
     setProgressText('Semua proses selesai');
     addLog(`Seluruh antrian selesai diproses: ${successCount} berhasil dari ${total} file.`, 'success');
     setIsProcessing(false);
+    setSyncJobs([]);
+    setSyncPolling(true);
   };
 
   return (
@@ -207,6 +258,65 @@ export default function UploadPage() {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
+          </div>
+        )}
+
+        {syncJobs.length > 0 && (
+          <div className="mt-8 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                Mirror Spreadsheet
+              </h3>
+              {syncPolling && (
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600">
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  menyinkronkan...
+                </span>
+              )}
+            </div>
+
+            <ul className="space-y-2">
+              {Object.values(
+                syncJobs.reduce<Record<string, SyncJobRow>>((acc, j) => {
+                  if (!acc[j.category]) acc[j.category] = j;
+                  return acc;
+                }, {})
+              ).map((j) => {
+                const pct = (j.status === 'running' || j.status === 'done')
+                  ? Math.round(((j.rowsDone || 0) / Math.max(1, j.rowsTotal || 1)) * 100)
+                  : 0;
+                const color =
+                  j.status === 'done' ? 'text-emerald-600'
+                  : j.status === 'failed' ? 'text-red-500'
+                  : j.status === 'running' ? 'text-blue-600'
+                  : 'text-slate-400';
+                return (
+                  <li key={j.category} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3.5 py-2.5">
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-700">
+                        {j.category}
+                        <span className={`ml-2 font-semibold ${color}`}>{j.status.toUpperCase()}</span>
+                        {(j.status === 'running' || j.status === 'done') && (
+                          <span className="ml-2 font-medium text-slate-400">{pct}% · {j.rowsDone}/{j.rowsTotal} baris</span>
+                        )}
+                      </div>
+                      {j.error && (
+                        <div className="truncate text-[11px] text-red-400" title={j.error}>{j.error}</div>
+                      )}
+                    </div>
+                    {j.status === 'failed' && (
+                      <button
+                        type="button"
+                        onClick={() => retrySync(j.category)}
+                        className="shrink-0 cursor-pointer rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100"
+                      >
+                        Sync Ulang
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
 

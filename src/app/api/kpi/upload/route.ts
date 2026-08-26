@@ -7,6 +7,7 @@ import { syncKpiToGoogleSheets } from '@/lib/sheets/sync';
 import { VALID_CATEGORIES, UploadCategory, UploadPayloadSchema, CATEGORY_ROUTING_MAP } from '@/types/ingestion';
 import { parseExcelRowsUniversally } from '@/lib/kpi/parser';
 import { assertApiAuth } from '@/lib/auth';
+import { createOrCoalesceJob } from '@/lib/sheets/mirror-writer';
 import { sql } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
@@ -287,6 +288,14 @@ export async function POST(req: NextRequest) {
 
     const executionTimeMs = Date.now() - startTime;
 
+    let syncJobId: string | null = null;
+    try {
+      const job = await createOrCoalesceJob(category, detectedPeriod);
+      syncJobId = job?.id ?? null;
+    } catch (syncErr) {
+      console.warn('[UploadAPI] Gagal membuat job sync sheet:', syncErr);
+    }
+
     if (calculatedSummary && Array.isArray(calculatedMetrics)) {
       syncKpiToGoogleSheets(detectedPeriod, calculatedSummary as any, calculatedMetrics as any).catch((err) => {
         console.error('[UploadAPI] Asynchronous Sheets Sync error:', err);
@@ -302,6 +311,7 @@ export async function POST(req: NextRequest) {
       period: detectedPeriod,
       fileName: file.name,
       executionTimeMs,
+      syncJobId,
       metrics: calculatedMetrics,
       summary: calculatedSummary,
     });

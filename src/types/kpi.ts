@@ -74,6 +74,8 @@ export interface QualityWeekData {
   listBilled: number;
   startDate?: string;
   endDate?: string;
+  nominalStartDate?: string;
+  nominalEndDate?: string;
   allTickets?: QualityTicketItem[];
 }
 

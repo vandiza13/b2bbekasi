@@ -20,51 +20,81 @@ export interface RawTicketInput {
   rawPayload?: Record<string, unknown> | null;
 }
 
+function payloadFlag(p: Record<string, unknown> | null | undefined, keys: string[]): string {
+  if (!p) return '';
+  for (const key of keys) {
+    const v = p[key];
+    if (v === null || v === undefined) continue;
+    const s = String(v).trim().toUpperCase();
+    if (s !== '') return s;
+  }
+  return '';
+}
+
+// Flag teks absolut ala Apps Script: COMPLY/NOT COMPLY menang atas nilai menit.
+// Fallback ke threshold menit hanya ketika sel flag benar-benar kosong.
+function complyByFlagOrMinutes(
+  p: Record<string, unknown> | null | undefined,
+  flagKeys: string[],
+  ttrMinutes: number | null | undefined,
+  thresholdMinutes: number
+): boolean {
+  const flag = payloadFlag(p, flagKeys);
+  if (flag !== '') return flag === 'COMPLY';
+  return ttrMinutes !== null && ttrMinutes !== undefined && ttrMinutes <= thresholdMinutes;
+}
+
+function wifiThresholdMinutes(p: Record<string, unknown> | null | undefined): number {
+  const jenis = payloadFlag(p, ['jenis_ggn', 'col_34']);
+  return jenis.includes('FISIK') ? 1440 : 360;
+}
+
+function gaulStatus(t: RawTicketInput): string {
+  if (t.isGaul) return 'GAUL';
+  const flag = payloadFlag(t.rawPayload, ['gaul', 'col_75', 'col_102', 'col_36', 'col_36_wifi']);
+  if (flag === 'GAUL') return 'GAUL';
+  return 'TIDAK GAUL';
+}
+
 export function evaluateTicketCompliance(ticket: RawTicketInput, indicatorCode: string): boolean {
   const p = ticket.rawPayload || {};
 
   switch (indicatorCode) {
     case 'TTR_DATIN_K1':
       if (ticket.category !== 'DATIN') return false;
-      if (String(p['col_67'] || p['comply'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 43;
+      return complyByFlagOrMinutes(p, ['col_67', 'col_52', 'comply'], ticket.ttrMinutes, 43);
 
     case 'TTR_DATIN_K2':
       if (ticket.category !== 'DATIN') return false;
-      if (String(p['col_67'] || p['comply'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 216;
+      return complyByFlagOrMinutes(p, ['col_67', 'col_52', 'comply'], ticket.ttrMinutes, 216);
 
     case 'TTR_DATIN_K3':
       if (ticket.category !== 'DATIN') return false;
-      if (String(p['col_67'] || p['comply'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 432;
+      return complyByFlagOrMinutes(p, ['col_67', 'col_52', 'comply'], ticket.ttrMinutes, 432);
 
     case 'ASR_GUARANTEE_DATIN':
       if (ticket.category !== 'DATIN') return false;
-      return !ticket.isGaul;
+      return gaulStatus(ticket) === 'TIDAK GAUL';
 
     case 'TTR_HSI_HVC_4H':
       if (ticket.category !== 'HSI') return false;
-      if (String(p['col_89'] || p['comply_4jam'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 240;
+      return complyByFlagOrMinutes(p, ['col_89', 'comply_4jam', 'comply'], ticket.ttrMinutes, 240);
 
     case 'TTR_HSI_HVC_24H':
       if (ticket.category !== 'HSI') return false;
-      if (String(p['col_90'] || p['comply_24jam'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 1440;
+      return complyByFlagOrMinutes(p, ['col_90', 'comply_24jam', 'comply'], ticket.ttrMinutes, 1440);
 
     case 'ASR_GUARANTEE_HSI':
       if (ticket.category !== 'HSI') return false;
-      return !ticket.isGaul;
+      return gaulStatus(ticket) === 'TIDAK GAUL';
 
     case 'TTR_WIFI':
       if (ticket.category !== 'WIFI') return false;
-      if (String(p['col_41'] || p['comply'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 360;
+      return complyByFlagOrMinutes(p, ['col_41', 'comply'], ticket.ttrMinutes, wifiThresholdMinutes(p));
 
     case 'ASR_GUARANTEE_WIFI':
       if (ticket.category !== 'WIFI') return false;
-      return !ticket.isGaul;
+      return gaulStatus(ticket) === 'TIDAK GAUL';
 
     default:
       return false;
@@ -123,16 +153,23 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
   const metrics: KpiMetric[] = INDICATORS.map((def) => {
     const rawRelevantTickets = filterTicketsForIndicator(allTickets, def.code);
 
+    // Dedup per SERVICE_NO untuk Assurance Guarantee, port setia calculateAssuranceGuarantee:
+    // - metadata (customer/sto/tanggal/minggu) dikunci pada kemunculan PERTAMA
+    // - status bersifat sticky: TIDAK GAUL sekali tercapai tidak dapat ditimpa GAUL
     let relevantTickets = rawRelevantTickets;
     if (def.code.startsWith('ASR_')) {
       const serviceMap = new Map<string, RawTicketInput>();
       for (const t of rawRelevantTickets) {
-        const key = t.serviceId || t.incidentId;
-        if (!serviceMap.has(key)) {
+        const sid = (t.serviceId || '').trim();
+        const key = sid !== '' ? sid : t.incidentId;
+        const existing = serviceMap.get(key);
+        if (!existing) {
           serviceMap.set(key, t);
-        } else if (!t.isGaul) {
-          // TIDAK GAUL menang atas GAUL (aturan Apps Script)
-          serviceMap.set(key, t);
+          continue;
+        }
+        if (gaulStatus(existing) !== 'TIDAK GAUL' && gaulStatus(t) === 'TIDAK GAUL') {
+          const mergedPayload = { ...(existing.rawPayload || {}), gaul: 'TIDAK GAUL' };
+          serviceMap.set(key, { ...existing, isGaul: false, rawPayload: mergedPayload });
         }
       }
       relevantTickets = Array.from(serviceMap.values());
@@ -180,12 +217,7 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
       const wTotal = weekTickets.length;
       const wComply = weekTickets.filter((t) => t.isComply).length;
 
-      let wReal = 0;
-      if (def.code === 'TTR_DATIN_K1') {
-        wReal = wTotal > 0 ? Number(((wComply / wTotal) * 100).toFixed(2)) : 0;
-      } else {
-        wReal = wTotal > 0 ? Number(((wComply / wTotal) * 100).toFixed(2)) : 0;
-      }
+      const wReal = wTotal > 0 ? Number(((wComply / wTotal) * 100).toFixed(2)) : 0;
 
       const weekStoBreakdown: StoBreakdown[] = MASTER_STOS.map((stoCode) => {
         const stoTickets = weekTickets.filter((t) => t.serviceAreaCode.toUpperCase() === stoCode.toUpperCase());

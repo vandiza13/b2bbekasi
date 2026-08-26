@@ -7,3 +7,7 @@ node_modules/
 scratch/
 brain/
 *.tsbuildinfo
+*.gs
+gas-export/
+.clasprc.json
+.clasp.json

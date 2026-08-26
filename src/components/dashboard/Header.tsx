@@ -7,7 +7,6 @@ import { Upload, Calendar, RefreshCw, LogOut } from 'lucide-react';
 interface HeaderProps {
   period: string;
   onPeriodChange: (newPeriod: string) => void;
-  onOpenUpload: () => void;
   isLoading: boolean;
   onRefresh: () => void;
 }

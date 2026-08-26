@@ -1,9 +1,10 @@
 import { db } from '@/db';
-import { incidentTickets, qIndexTickets } from '@/db/schema';
-import { sql } from 'drizzle-orm';
-import { formatPeriodDisplay, INDICATORS, getSalesAreaForSto, MASTER_STOS } from '@/lib/kpi/constants';
+import { billedCustomers, incidentTickets, qIndexTickets } from '@/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
+import { formatPeriodDisplay, INDICATORS } from '@/lib/kpi/constants';
 import { computeKpiMetrics, RawTicketInput } from '@/lib/kpi/engine';
-import { StatsResponse, QualityData, QualityWeekData, QualityTicketItem, KpiSummary } from '@/types/kpi';
+import { computeQIndex, DEFAULT_Q_BILLED, BilledMap, QTicketInput } from '@/lib/kpi/q-index';
+import { StatsResponse, QualityData, KpiSummary } from '@/types/kpi';
 
 function parsePercent(val: unknown): number | null {
   if (val === null || val === undefined) return null;
@@ -13,109 +14,45 @@ function parsePercent(val: unknown): number | null {
   return match ? parseFloat(match[0]) : null;
 }
 
+async function loadBilledMap(category: 'HSI' | 'DATIN'): Promise<BilledMap> {
+  try {
+    const rows = await db
+      .select()
+      .from(billedCustomers)
+      .where(eq(billedCustomers.serviceType, category))
+      .orderBy(desc(billedCustomers.periodYear), desc(billedCustomers.periodMonth));
+
+    if (rows.length === 0) return DEFAULT_Q_BILLED[category];
+
+    const topPeriod = `${rows[0].periodYear}-${String(rows[0].periodMonth).padStart(2, '0')}`;
+    const map: BilledMap = {};
+    for (const r of rows) {
+      const p = `${r.periodYear}-${String(r.periodMonth).padStart(2, '0')}`;
+      if (p !== topPeriod) break;
+      if (r.serviceAreaCode) map[r.serviceAreaCode.toUpperCase()] = r.totalBilled;
+    }
+    return Object.keys(map).length > 0 ? map : DEFAULT_Q_BILLED[category];
+  } catch (err) {
+    console.warn(`[StatsService] Gagal memuat billed_customers ${category}:`, err);
+    return DEFAULT_Q_BILLED[category];
+  }
+}
+
 function buildQualityData(
   qTicketsAll: (typeof qIndexTickets.$inferSelect)[],
   category: 'HSI' | 'DATIN',
   targetStr: string,
-  listBilledDefault: number
+  billed: BilledMap
 ): QualityData | null {
-  let qTickets = qTicketsAll.filter(t => t.category === category);
-  if (qTickets.length === 0) return null;
+  const tickets: QTicketInput[] = qTicketsAll
+    .filter(t => t.category === category)
+    .map(t => ({
+      incidentId: t.incidentId,
+      sto: t.serviceAreaCode || '',
+      reportedAt: new Date(t.reportedAt),
+    }));
 
-  const dates = qTickets.map(t => new Date(t.reportedAt).getTime());
-  const maxDate = new Date(Math.max(...dates));
-  const year = maxDate.getFullYear();
-  const month = maxDate.getMonth();
-  const day = maxDate.getDate();
-
-  // Jendela rolling: dari tanggal yang sama pada bulan sebelumnya s.d. tanggal maksimum data
-  const realStart = new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
-  const todayEnd = new Date(year, month, day, 23, 59, 59, 999).getTime();
-
-  const w1End = Math.min(todayEnd, new Date(year, month, 7, 23, 59, 59, 999).getTime());
-  const w2End = Math.min(todayEnd, new Date(year, month, 14, 23, 59, 59, 999).getTime());
-  const w3End = Math.min(todayEnd, new Date(year, month, 21, 23, 59, 59, 999).getTime());
-  const w4End = Math.min(todayEnd, new Date(year, month + 1, 0, 23, 59, 59, 999).getTime());
-
-  qTickets = qTickets.filter(t => {
-    const d = new Date(t.reportedAt).getTime();
-    return d >= realStart && d <= todayEnd;
-  });
-
-  const totalTiket = qTickets.length;
-  const listBilled = listBilledDefault;
-  const real = listBilled > 0 ? Number(((totalTiket / listBilled) * 100).toFixed(2)) : 0;
-
-  const weeks: Record<string, QualityWeekData> = {
-    W1: { q: 0, real: 0, totalTiket: 0, listBilled, allTickets: [] },
-    W2: { q: 0, real: 0, totalTiket: 0, listBilled, allTickets: [] },
-    W3: { q: 0, real: 0, totalTiket: 0, listBilled, allTickets: [] },
-    W4: { q: 0, real: 0, totalTiket: 0, listBilled, allTickets: [] },
-  };
-
-  const branches: Record<string, { totalTiket: number; listBilled: number; q: number }> = {};
-  for (const sto of MASTER_STOS) {
-    const sa = getSalesAreaForSto(sto);
-    if (!branches[sa]) {
-      branches[sa] = { totalTiket: 0, listBilled: Math.round(listBilled / MASTER_STOS.length), q: 0 };
-    }
-  }
-
-  for (const t of qTickets) {
-    const dTime = new Date(t.reportedAt).getTime();
-    const dStr = new Date(t.reportedAt).toISOString().split('T')[0];
-
-    let wKey = 'W4';
-    if (dTime <= w1End) wKey = 'W1';
-    else if (dTime <= w2End) wKey = 'W2';
-    else if (dTime <= w3End) wKey = 'W3';
-
-    const sto = t.serviceAreaCode || 'BEK';
-    const sa = getSalesAreaForSto(sto);
-
-    const qItem: QualityTicketItem = {
-      tiket: t.incidentId,
-      sto,
-      sa,
-      tanggal: dStr,
-    };
-
-    if (weeks[wKey]) {
-      weeks[wKey].allTickets!.push(qItem);
-      weeks[wKey].totalTiket++;
-    }
-
-    if (branches[sa]) {
-      branches[sa].totalTiket++;
-    }
-  }
-
-  // Mingguan bersifat kumulatif: W2 mencakup W1, W3 mencakup W1+W2, dst.
-  weeks.W2.totalTiket += weeks.W1.totalTiket;
-  weeks.W3.totalTiket += weeks.W2.totalTiket;
-  weeks.W4.totalTiket += weeks.W3.totalTiket;
-
-  for (const wKey of Object.keys(weeks)) {
-    const w = weeks[wKey];
-    w.q = w.listBilled > 0 ? Number(((w.totalTiket / w.listBilled) * 100).toFixed(2)) : 0;
-    w.real = w.q;
-  }
-
-  for (const sa of Object.keys(branches)) {
-    const b = branches[sa];
-    b.q = b.listBilled > 0 ? Number(((b.totalTiket / b.listBilled) * 100).toFixed(2)) : 0;
-  }
-
-  return {
-    indicator: `Q ${category}`,
-    source: `Quantity ${category}`,
-    real,
-    target: targetStr,
-    totalTiket,
-    listBilled,
-    weeks,
-    branches,
-  };
+  return computeQIndex({ category, target: targetStr, tickets, billed });
 }
 
 export async function getStatsResponse(periodParam?: string): Promise<StatsResponse> {
@@ -139,8 +76,13 @@ export async function getStatsResponse(periodParam?: string): Promise<StatsRespo
     console.warn('[StatsAPI] Error fetching Q tickets:', err);
   }
 
-  const qHsiData = buildQualityData(rawQTickets, 'HSI', '2.40%', 14303);
-  const qDatinData = buildQualityData(rawQTickets, 'DATIN', '2.70%', 2222);
+  const [billedHsi, billedDatin] = await Promise.all([
+    loadBilledMap('HSI'),
+    loadBilledMap('DATIN'),
+  ]);
+
+  const qHsiData = buildQualityData(rawQTickets, 'HSI', '2.40%', billedHsi);
+  const qDatinData = buildQualityData(rawQTickets, 'DATIN', '2.70%', billedDatin);
 
   let metrics = [];
   if (ticketsForPeriod.length > 0) {

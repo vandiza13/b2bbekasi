@@ -49,15 +49,15 @@ export async function verifySessionToken(token: string, secret: string): Promise
   return diff === 0;
 }
 
-export async function hasValidSession(req: NextRequest): Promise<boolean> {
-  if (!isAuthConfigured()) return true;
-  const token = req.cookies.get(SESSION_COOKIE)?.value;
-  if (!token) return false;
-  return verifySessionToken(token, process.env.AUTH_SECRET as string);
-}
-
 export async function assertApiAuth(req: NextRequest): Promise<boolean> {
   const apiKey = process.env.API_SECRET_KEY;
   if (apiKey && req.headers.get('x-api-key') === apiKey) return true;
-  return hasValidSession(req);
+
+  // Mode terbuka hanya jika tidak ada mekanisme keamanan yang dikonfigurasi sama sekali
+  if (!apiKey && !isAuthConfigured()) return true;
+
+  if (!isAuthConfigured()) return false;
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  if (!token) return false;
+  return verifySessionToken(token, process.env.AUTH_SECRET as string);
 }

@@ -102,6 +102,21 @@ export const kpiSnapshots = pgTable('kpi_snapshots', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+// 8. Antrian mirror-raw ke Google Spreadsheet
+export const sheetSyncJobs = pgTable('sheet_sync_jobs', {
+  id: varchar('id', { length: 80 }).primaryKey(),
+  category: varchar('category', { length: 30 }).notNull(),
+  targetSheet: varchar('target_sheet', { length: 100 }).notNull(),
+  period: varchar('period', { length: 10 }).notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  rowsTotal: integer('rows_total').default(0),
+  rowsDone: integer('rows_done').default(0),
+  attempts: integer('attempts').default(0),
+  error: text('error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 export type ServiceArea = typeof serviceAreas.$inferSelect;
 export type InsertServiceArea = typeof serviceAreas.$inferInsert;
 export type IncidentTicket = typeof incidentTickets.$inferSelect;
@@ -116,3 +131,5 @@ export type OutstandingTicket = typeof outstandingTickets.$inferSelect;
 export type InsertOutstandingTicket = typeof outstandingTickets.$inferInsert;
 export type QIndexTicket = typeof qIndexTickets.$inferSelect;
 export type InsertQIndexTicket = typeof qIndexTickets.$inferInsert;
+export type SheetSyncJob = typeof sheetSyncJobs.$inferSelect;
+export type InsertSheetSyncJob = typeof sheetSyncJobs.$inferInsert;

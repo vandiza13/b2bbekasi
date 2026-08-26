@@ -6,6 +6,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const apiKey = process.env.API_SECRET_KEY;
+  if (apiKey && req.headers.get('x-api-key') === apiKey) {
+    return NextResponse.next();
+  }
+
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const valid = token
     ? await verifySessionToken(token, process.env.AUTH_SECRET as string)
@@ -26,5 +31,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/upload', '/api/kpi/stats', '/api/kpi/upload', '/api/telegram/broadcast'],
+  matcher: ['/', '/upload', '/api/kpi/stats', '/api/kpi/upload', '/api/telegram/broadcast', '/api/sheets/sync'],
 };
