@@ -44,9 +44,9 @@ export async function GET(req: NextRequest) {
       console.warn('[StatsAPI] Error fetching Q tickets:', err);
     }
 
-    // Process Q HSI and Q DATIN matching perhitungan_V3.gs
+    // Process HSI and Q DATIN matching perhitungan_V3.gs
     const buildQualityData = (category: 'HSI' | 'DATIN', targetStr: string, listBilledDefault: number): QualityData | null => {
-      let qTickets = rawQTickets.filter(t => t.category === `Q ${category}`);
+      let qTickets = rawQTickets.filter(t => t.category === category);
       if (qTickets.length === 0) return null;
 
       // Find Max Date in DB to simulate "today" in Apps Script
