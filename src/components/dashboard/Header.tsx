@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Upload, Calendar, RefreshCw } from 'lucide-react';
+import { Upload, Calendar, RefreshCw, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   period: string;
@@ -23,6 +23,17 @@ export const Header: React.FC<HeaderProps> = ({
   isLoading,
   onRefresh,
 }) => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      window.location.href = '/login';
+    }
+  };
   const availablePeriods = useMemo(() => {
     const list: { key: string; label: string }[] = [];
     const baseDate = new Date();
@@ -48,7 +59,6 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 text-white shadow-lg backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-4 lg:px-8">
         
-        {/* Brand */}
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-cyan-500/20">
             <span className="text-xs font-black text-white">KPI</span>
@@ -59,10 +69,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </Link>
 
-        {/* Right Buttons */}
         <div className="flex items-center gap-3">
           
-          {/* Month pill */}
           <div className="flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300">
             <Calendar className="w-3.5 h-3.5 text-slate-400 mr-1.5 shrink-0" />
             <select
@@ -78,7 +86,6 @@ export const Header: React.FC<HeaderProps> = ({
             </select>
           </div>
 
-          {/* Refresh Button */}
           <button
             type="button"
             onClick={onRefresh}
@@ -89,7 +96,6 @@ export const Header: React.FC<HeaderProps> = ({
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-cyan-400' : ''}`} />
           </button>
 
-          {/* Upload Link Button to /upload */}
           <Link
             href="/upload"
             className="flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-300 transition hover:border-cyan-400/40 hover:bg-cyan-500/20"
@@ -97,6 +103,16 @@ export const Header: React.FC<HeaderProps> = ({
             <Upload className="h-4 w-4" />
             <span>Upload Data</span>
           </Link>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-red-500/20 hover:text-red-300 transition disabled:opacity-50"
+            title="Keluar"
+          >
+            <LogOut className={`h-3.5 w-3.5 ${isLoggingOut ? 'animate-pulse' : ''}`} />
+          </button>
 
         </div>
 

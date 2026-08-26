@@ -36,7 +36,6 @@ export function parseExcelRowsUniversally(
     return { parsedRows: [], detectedPeriod: explicitPeriod || extractPeriodFromDate(new Date()) };
   }
 
-  // Read sheet as 2D raw array (preserving all column positions)
   const raw2D: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
     header: 1,
     defval: '',
@@ -49,7 +48,6 @@ export function parseExcelRowsUniversally(
     return { parsedRows: [], detectedPeriod: explicitPeriod || extractPeriodFromDate(new Date()) };
   }
 
-  // Find header row index
   let headerRowIndex = 0;
   for (let r = 0; r < Math.min(10, raw2D.length); r++) {
     const row = raw2D[r].map(c => String(c || '').trim().toLowerCase());
@@ -105,7 +103,7 @@ export function parseExcelRowsUniversally(
     const row = dataRows[r];
     if (!row || row.length === 0) continue;
 
-    // 1. Exact Column Extraction per category based on perhitungan_V3.gs
+    // Kolom tetap mengikuti struktur export Insera pada perhitungan_V3.gs
     let rawId: unknown = undefined;
     let rawSto: unknown = undefined;
     let rawCust: unknown = undefined;
@@ -134,7 +132,7 @@ export function parseExcelRowsUniversally(
       rawTtr = row[88] || (ttrCol !== -1 ? row[ttrCol] : undefined);
       rawDate = row[97] || (dateCol !== -1 ? row[dateCol] : undefined);
       rawGaul = row[102] || (gaulCol !== -1 ? row[gaulCol] : undefined);
-      rawComply = row[89]; // 4 Jam comply
+      rawComply = row[89];
     } else if (category === 'WIFI') {
       rawId = row[0] || (idCol !== -1 ? row[idCol] : undefined);
       rawCust = row[1] || (custCol !== -1 ? row[custCol] : undefined);
@@ -183,10 +181,8 @@ export function parseExcelRowsUniversally(
       continue;
     }
 
-    // Strict STO Normalization (Filter Branch Bekasi only)
     let serviceAreaCode = normalizeSTO(rawSto);
     if (!serviceAreaCode) {
-      // Check if any cell in row contains Branch Bekasi STO/Witel
       for (let c = 0; c < Math.min(10, row.length); c++) {
         const check = normalizeSTO(row[c]);
         if (check) {
@@ -197,7 +193,6 @@ export function parseExcelRowsUniversally(
     }
 
     if (!serviceAreaCode) {
-      // Per perhitungan_V3.gs: if (!sa) continue;
       continue;
     }
 
@@ -225,11 +220,9 @@ export function parseExcelRowsUniversally(
     const rawStatus = statusCol !== -1 ? row[statusCol] : undefined;
     const status = rawStatus ? String(rawStatus).trim().toUpperCase() : 'CLOSED';
 
-    // GAUL evaluation per perhitungan_V3.gs
     const gaulStr = String(rawGaul || '').trim().toUpperCase();
     const isGaul = gaulStr === 'GAUL';
 
-    // Sub-Category (K1, K2, K3) for DATIN
     let subCategory = rawKategori ? String(rawKategori).trim().toUpperCase() : null;
     if (!subCategory && summary) {
       if (summary.toUpperCase().includes('K1')) subCategory = 'K1';

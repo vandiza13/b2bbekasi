@@ -88,7 +88,6 @@ function renderCard(
   const total = Number(item.totalTiket || 0);
   const targetNum = parseTargetNumber(item.target);
 
-  // Semakin kecil real <= targetNum = ACHIEVED
   const achieved = targetNum > 0 ? real <= targetNum : true;
 
   const status = achieved
@@ -121,7 +120,6 @@ function renderCard(
       key={title}
       className="dashboard-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card"
     >
-      {/* Header */}
       <div className="border-b border-slate-100 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -139,10 +137,8 @@ function renderCard(
         </div>
       </div>
 
-      {/* Performance */}
       <div className="px-5 py-5">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {/* Real */}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Real
@@ -152,7 +148,6 @@ function renderCard(
             </div>
           </div>
 
-          {/* Target */}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Target
@@ -162,7 +157,6 @@ function renderCard(
             </div>
           </div>
 
-          {/* Total Tiket */}
           <div className="col-span-2 sm:col-span-1">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Total Tiket
@@ -173,7 +167,6 @@ function renderCard(
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="mt-5">
           <div className="mb-2 flex justify-between text-[10px] font-semibold text-slate-400">
             <span>Achievement</span>
@@ -188,7 +181,6 @@ function renderCard(
           </div>
         </div>
 
-        {/* Weekly */}
         <div className="mt-5">
           <div className="mb-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
             Weekly
@@ -225,7 +217,6 @@ function renderCard(
           </div>
         </div>
 
-        {/* Action */}
         <div className="mt-5">
           <button
             type="button"

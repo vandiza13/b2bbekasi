@@ -15,7 +15,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({ metric, onOpenDetail }) 
   return (
     <div className="dashboard-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
       
-      {/* TOP */}
       <div className="border-b border-slate-100 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -38,7 +37,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({ metric, onOpenDetail }) 
         </div>
       </div>
 
-      {/* PERFORMANCE */}
       <div className="px-5 py-5">
           <div className="mt-6 grid grid-cols-4 gap-4 sm:grid-cols-4">
             <div className="col-span-1">
@@ -92,7 +90,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({ metric, onOpenDetail }) 
             )}
           </div>
 
-        {/* PROGRESS */}
         <div className="mt-5">
           <div className="mb-2 flex justify-between text-[10px] font-semibold text-slate-400">
             <span>Achievement</span>
@@ -108,7 +105,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({ metric, onOpenDetail }) 
           </div>
         </div>
 
-        {/* WEEK */}
         <div className="mt-5 grid grid-cols-4 gap-2">
           {metric.weekly.map((w) => {
             const wAchieved = w.ticketCount === 0 || w.realRate >= metric.targetRate;
@@ -142,7 +138,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({ metric, onOpenDetail }) 
           })}
         </div>
 
-        {/* ACTION */}
         <div className="mt-5 flex gap-2">
           <button
             type="button"

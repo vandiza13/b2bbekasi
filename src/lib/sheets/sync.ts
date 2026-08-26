@@ -11,7 +11,6 @@ export async function syncKpiToGoogleSheets(
   const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (!spreadsheetId || !clientEmail || !privateKey) {
-    // Graceful bypass if Google Sheets env vars are not set
     console.log('[SheetsSync] Google Sheets credentials not configured. Skipping sync.');
     return { success: true, message: 'Google Sheets sync skipped (not configured).' };
   }
@@ -25,7 +24,6 @@ export async function syncKpiToGoogleSheets(
 
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // Prepare rows for sheet
     const rows = [
       ['KPI BGES BEKASI - BACKUP SNAPSHOT', `Period: ${period}`, `Timestamp: ${new Date().toISOString()}`],
       ['Total Indicators', summary.totalIndicators, 'Achieved', summary.achievedCount, 'Below Target', summary.belowTargetCount, 'Overall %', `${summary.overallAchievement}%`],
@@ -51,7 +49,6 @@ export async function syncKpiToGoogleSheets(
       ]);
     }
 
-    // Append / Write to sheet
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: 'KPI_Snapshots!A1',

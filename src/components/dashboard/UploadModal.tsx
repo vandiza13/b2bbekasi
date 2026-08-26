@@ -110,7 +110,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
       <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         
-        {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
@@ -130,10 +129,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-6 space-y-4">
           
-          {/* Dropzone */}
           {!uploadResult ? (
             <div>
               <input
@@ -198,7 +195,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             </div>
           )}
 
-          {/* Error message */}
           {errorMsg && (
             <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -206,14 +202,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             </div>
           )}
 
-          {/* Format Guidance */}
           <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200 text-[11px] text-slate-500 space-y-1">
             <div className="font-semibold text-slate-700">Kolom yang didukung secara otomatis:</div>
             <p>Incident ID / Tiket ID, Summary, STO, Customer Name, Layanan, Kategori, Tgl Lapor, Tgl Selesai, TTR Menit, Status.</p>
           </div>
         </div>
 
-        {/* Modal Footer */}
         <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
           <button
             type="button"

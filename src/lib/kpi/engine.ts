@@ -32,12 +32,12 @@ export function evaluateTicketCompliance(ticket: RawTicketInput, indicatorCode: 
     case 'TTR_DATIN_K2':
       if (ticket.category !== 'DATIN') return false;
       if (String(p['col_67'] || p['comply'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 216; // 3.6 hours
+      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 216;
 
     case 'TTR_DATIN_K3':
       if (ticket.category !== 'DATIN') return false;
       if (String(p['col_67'] || p['comply'] || '').trim().toUpperCase() === 'COMPLY') return true;
-      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 432; // 7.2 hours
+      return ticket.ttrMinutes !== null && ticket.ttrMinutes !== undefined && ticket.ttrMinutes <= 432;
 
     case 'ASR_GUARANTEE_DATIN':
       if (ticket.category !== 'DATIN') return false;
@@ -123,7 +123,6 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
   const metrics: KpiMetric[] = INDICATORS.map((def) => {
     const rawRelevantTickets = filterTicketsForIndicator(allTickets, def.code);
 
-    // Dedup / Service resolution for Assurance Guarantee indicators
     let relevantTickets = rawRelevantTickets;
     if (def.code.startsWith('ASR_')) {
       const serviceMap = new Map<string, RawTicketInput>();
@@ -131,11 +130,9 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
         const key = t.serviceId || t.incidentId;
         if (!serviceMap.has(key)) {
           serviceMap.set(key, t);
-        } else {
-          // In Apps Script rule: TIDAK GAUL takes priority over GAUL
-          if (!t.isGaul) {
-            serviceMap.set(key, t);
-          }
+        } else if (!t.isGaul) {
+          // TIDAK GAUL menang atas GAUL (aturan Apps Script)
+          serviceMap.set(key, t);
         }
       }
       relevantTickets = Array.from(serviceMap.values());
@@ -163,7 +160,7 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
     const achievedTickets = ticketItems.filter((t) => t.isComply).length;
     const belowTargetTickets = totalTickets - achievedTickets;
 
-    // Special rule for DATIN K1: monthly if 0 tickets = 100%
+    // K1: tanpa tiket dianggap 100%
     let realRate = 0;
     if (def.code === 'TTR_DATIN_K1') {
       realRate = totalTickets > 0 ? Number(((achievedTickets / totalTickets) * 100).toFixed(2)) : 100;
@@ -174,7 +171,6 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
     const achievementRate = def.targetRate > 0 ? Number(((realRate / def.targetRate) * 100).toFixed(2)) : 0;
     const status: 'ACHIEVED' | 'BELOW_TARGET' = realRate >= def.targetRate ? 'ACHIEVED' : 'BELOW_TARGET';
 
-    // Weekly metrics
     const weekly: WeeklyStat[] = weeksList.map((weekKey) => {
       const weekTickets = ticketItems.filter((t) => {
         const d = new Date(t.reportedAt);
@@ -191,7 +187,6 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
         wReal = wTotal > 0 ? Number(((wComply / wTotal) * 100).toFixed(2)) : 0;
       }
 
-      // STO breakdown for week
       const weekStoBreakdown: StoBreakdown[] = MASTER_STOS.map((stoCode) => {
         const stoTickets = weekTickets.filter((t) => t.serviceAreaCode.toUpperCase() === stoCode.toUpperCase());
         const sTotal = stoTickets.length;
@@ -216,7 +211,6 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
       };
     });
 
-    // Overall STO Breakdown
     const stoBreakdown: StoBreakdown[] = MASTER_STOS.map((stoCode) => {
       const stoTickets = ticketItems.filter((t) => t.serviceAreaCode.toUpperCase() === stoCode.toUpperCase());
       const sTotal = stoTickets.length;

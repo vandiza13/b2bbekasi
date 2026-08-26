@@ -8,7 +8,6 @@ dotenv.config();
 
 const connectionString = process.env.DATABASE_URL || '';
 
-// Connection for queries
 const client = postgres(connectionString, {
   prepare: false, // Transaction mode pooler requires prepare: false
   max: 10,

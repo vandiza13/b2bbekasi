@@ -16,13 +16,11 @@ export default function DashboardPage() {
   const [data, setData] = useState<StatsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Metric Modal drilldown state
   const [selectedMetric, setSelectedMetric] = useState<KpiMetric | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<'W1' | 'W2' | 'W3' | 'W4' | null>(null);
   const [onlyBelowTarget, setOnlyBelowTarget] = useState<boolean>(false);
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
 
-  // Quality Modal drilldown state
   const [selectedQualityItem, setSelectedQualityItem] = useState<QualityData | null>(null);
   const [selectedQualityWeek, setSelectedQualityWeek] = useState<string | null>(null);
   const [selectedQualityTitle, setSelectedQualityTitle] = useState<string>('Quality Performance');
@@ -95,7 +93,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800">
-      {/* Header */}
       <Header
         period={period}
         onPeriodChange={handlePeriodChange}
@@ -104,10 +101,8 @@ export default function DashboardPage() {
         onRefresh={() => fetchStats(period)}
       />
 
-      {/* Main Container */}
       <main className="mx-auto max-w-[1600px] px-4 py-6 lg:px-8 lg:py-8">
         
-        {/* Error Alert */}
         {error && (
           <div className="mb-6 flex items-center justify-between p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
             <div className="flex items-center gap-2.5">
@@ -123,7 +118,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Dashboard Title & Floating Update Widget */}
         <section className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
@@ -150,12 +144,10 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Summary Cards */}
         {data && (
           <SummaryCards summary={data.summary} />
         )}
 
-        {/* Loading Spinner */}
         {isLoading && !data && (
           <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 my-8 shadow-card">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
@@ -163,7 +155,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Section 1: TTR Performance */}
         {ttrMetrics.length > 0 && (
           <section className="mb-10">
             <div className="mb-4 flex items-center justify-between">
@@ -193,7 +184,6 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* Section 2: Assurance Guarantee */}
         {assuranceMetrics.length > 0 && (
           <section className="mb-10">
             <div className="mb-4 flex items-center justify-between">
@@ -219,7 +209,6 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* Section 3: Quantity Performance (Q-Index: Q HSI & Q DATIN) - PALING BAWAH */}
         {data && (data.qHsi || data.qDatin) && (
           <div className="mb-10">
             <QualityCards
@@ -231,14 +220,12 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Footer */}
         <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-400">
           Dashboard Branch Bekasi <span className="mx-1">•</span> TTR, Assurance & Quality Performance Monitoring
         </footer>
 
       </main>
 
-      {/* Metric Detail Drilldown Modal */}
       <DetailModal
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
@@ -247,7 +234,6 @@ export default function DashboardPage() {
         onlyBelowTarget={onlyBelowTarget}
       />
 
-      {/* Quality Drilldown Modal */}
       <QualityModal
         isOpen={isQualityModalOpen}
         onClose={() => setIsQualityModalOpen(false)}

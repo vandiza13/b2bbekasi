@@ -6,6 +6,7 @@ import { computeKpiMetrics, RawTicketInput } from '@/lib/kpi/engine';
 import { syncKpiToGoogleSheets } from '@/lib/sheets/sync';
 import { VALID_CATEGORIES, UploadCategory, UploadPayloadSchema, CATEGORY_ROUTING_MAP } from '@/types/ingestion';
 import { parseExcelRowsUniversally } from '@/lib/kpi/parser';
+import { assertApiAuth } from '@/lib/auth';
 import { sql } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
@@ -23,12 +24,15 @@ function deduplicateByKey<T, K>(arr: T[], keyFn: (item: T) => K): T[] {
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   try {
+    if (!(await assertApiAuth(req))) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const categoryRaw = formData.get('category') as string | null;
     const periodRaw = (formData.get('period') as string | null) || undefined;
 
-    // 1. Category Validator
     if (!categoryRaw) {
       return NextResponse.json({
         success: false,
@@ -59,12 +63,10 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // 2. In-Memory Parser (Zero disk I/O)
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
 
-    // 3. Universal Multi-Strategy Parsing & Sanitization
     const { parsedRows, detectedPeriod } = parseExcelRowsUniversally(
       workbook,
       category,
@@ -74,9 +76,7 @@ export async function POST(req: NextRequest) {
     let calculatedMetrics: unknown[] = [];
     let calculatedSummary: unknown = null;
 
-    // 4. Transactional Upsert with In-Batch Deduplication
     await db.transaction(async (tx) => {
-      // 4.1 Incident Tickets Ingestion (HSI, DATIN, WIFI, SIP TRUNK, DWDM)
       if (routingInfo.targetTable === 'incident_tickets' && parsedRows.length > 0) {
         const uniqueTickets = deduplicateByKey(parsedRows, t => t.incidentId);
         const CHUNK_SIZE = 100;
@@ -126,8 +126,10 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        // Fetch all tickets to recompute KPI snapshots for this period
-        const existingTickets = await tx.select().from(incidentTickets);
+        // Recompute KPI hanya untuk periode yang di-upload agar tidak tercampur bulan lain
+        const existingTickets = await tx.select().from(incidentTickets).where(
+          sql`TO_CHAR(${incidentTickets.reportedAt}, 'YYYY-MM') = ${detectedPeriod}`
+        );
         const mappedAllTickets: RawTicketInput[] = existingTickets.map(t => ({
           incidentId: t.incidentId,
           summary: t.summary,
@@ -151,7 +153,6 @@ export async function POST(req: NextRequest) {
         calculatedMetrics = metrics;
         calculatedSummary = summary;
 
-        // Upsert Snapshots
         for (const m of metrics) {
           const snapshotId = `${detectedPeriod}_${m.id}`;
           await tx.insert(kpiSnapshots).values({
@@ -186,7 +187,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 4.2 SQM Tickets Ingestion
       if (routingInfo.targetTable === 'sqm_tickets' && parsedRows.length > 0) {
         const uniqueSqm = deduplicateByKey(parsedRows, t => t.incidentId);
         const CHUNK_SIZE = 100;
@@ -222,7 +222,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 4.3 Outstanding Tickets Ingestion
       if (routingInfo.targetTable === 'outstanding_tickets' && parsedRows.length > 0) {
         const uniqueOut = deduplicateByKey(parsedRows, t => t.incidentId);
         const CHUNK_SIZE = 100;
@@ -256,7 +255,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 4.4 Q Index Tickets Ingestion (Deduplicate by `${serviceAreaCode}_${incidentId}`)
       if (routingInfo.targetTable === 'q_index_tickets' && parsedRows.length > 0) {
         const uniqueQ = deduplicateByKey(parsedRows, t => `${t.serviceAreaCode}_${t.incidentId}`);
         const CHUNK_SIZE = 100;
@@ -289,14 +287,12 @@ export async function POST(req: NextRequest) {
 
     const executionTimeMs = Date.now() - startTime;
 
-    // 5. Asynchronous Sheets Sync (Fire-and-forget background job)
     if (calculatedSummary && Array.isArray(calculatedMetrics)) {
       syncKpiToGoogleSheets(detectedPeriod, calculatedSummary as any, calculatedMetrics as any).catch((err) => {
         console.error('[UploadAPI] Asynchronous Sheets Sync error:', err);
       });
     }
 
-    // Return immediate HTTP 200 response
     return NextResponse.json({
       success: true,
       category,

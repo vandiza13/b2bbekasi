@@ -128,7 +128,6 @@ export default function UploadPage() {
     <div className="bg-gradient-to-br from-blue-100 via-gray-100 to-blue-200 min-h-screen flex items-center justify-center p-5">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-5xl p-8">
         
-        {/* Header & Back Link */}
         <div className="flex items-center justify-between mb-6">
           <Link
             href="/"
@@ -146,7 +145,6 @@ export default function UploadPage() {
           Pilih file sesuai kategori. Sistem akan memproses otomatis sesuai antrian.
         </p>
 
-        {/* 9 Category Upload Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {FILE_CATEGORIES.map((item) => {
             const hasFile = Boolean(selectedFiles[item.category]);
@@ -177,7 +175,6 @@ export default function UploadPage() {
           })}
         </div>
 
-        {/* Upload Button */}
         <button
           id="uploadButton"
           type="button"
@@ -188,7 +185,6 @@ export default function UploadPage() {
           {isProcessing ? '⏳ Sedang Memproses Antrian...' : '🚀 Upload & Proses Semua'}
         </button>
 
-        {/* Progress Section */}
         {showProgress && (
           <div id="progressContainer" className="mt-8">
             <div className="flex justify-between mb-2">
@@ -212,7 +208,6 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* Log Section */}
         <div id="logSection" className="mt-8">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-bold text-gray-700">🧾 Log Proses</h3>

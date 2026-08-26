@@ -72,7 +72,6 @@ export const QualityModal: React.FC<QualityModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/60 backdrop-blur-sm">
       <div className="relative w-full max-w-4xl max-h-[90vh] bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <div>
             <div className="flex items-center gap-2">
@@ -98,10 +97,8 @@ export const QualityModal: React.FC<QualityModalProps> = ({
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* Week Date Banner if weekly */}
           {selectedWeek && weekData && (
             <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
               <div className="text-[10px] font-extrabold uppercase tracking-wider text-blue-500">
@@ -113,7 +110,6 @@ export const QualityModal: React.FC<QualityModalProps> = ({
             </div>
           )}
 
-          {/* Stats Summary */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Real (Q)</span>
@@ -141,7 +137,6 @@ export const QualityModal: React.FC<QualityModalProps> = ({
             </div>
           </div>
 
-          {/* Branches / Service Area Table */}
           {item.branches && Object.keys(item.branches).length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -184,7 +179,6 @@ export const QualityModal: React.FC<QualityModalProps> = ({
             </div>
           )}
 
-          {/* Ticket Detail Table for Weekly Drilldown */}
           {selectedWeek && (
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
@@ -246,7 +240,6 @@ export const QualityModal: React.FC<QualityModalProps> = ({
 
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end px-6 py-3.5 border-t border-slate-100 bg-slate-50/50">
           <button
             type="button"

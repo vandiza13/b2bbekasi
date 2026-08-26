@@ -1,5 +1,5 @@
-export const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7480213564:AAGjXLBTPGOEhJXRWyPbWXsiIa0BzlwYSsA';
-export const TELEGRAM_DEFAULT_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '-1001894196961';
+export const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+export const TELEGRAM_DEFAULT_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 
 export function escapeMarkdownV2(text: string): string {
   return text
@@ -39,6 +39,11 @@ export function getCurrentTimeWIB(): string {
 }
 
 export async function sendTelegramMessage(text: string, chatId: string = TELEGRAM_DEFAULT_CHAT_ID): Promise<boolean> {
+  if (!TELEGRAM_BOT_TOKEN || !chatId) {
+    console.warn('[Telegram] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID belum dikonfigurasi. Pesan dilewati.');
+    return false;
+  }
+
   const maxLength = 4000;
   const escapedText = escapeMarkdownV2(text);
   const lines = escapedText.split('\n');

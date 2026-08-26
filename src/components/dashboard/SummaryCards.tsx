@@ -11,7 +11,6 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
   return (
     <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       
-      {/* 1. TOTAL INDICATOR */}
       <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-card">
         <div className="flex items-center justify-between">
           <div>
@@ -31,7 +30,6 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
         </div>
       </div>
 
-      {/* 2. ACHIEVED */}
       <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-card">
         <div className="flex items-center justify-between">
           <div>
@@ -51,7 +49,6 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
         </div>
       </div>
 
-      {/* 3. BELOW TARGET */}
       <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-card">
         <div className="flex items-center justify-between">
           <div>
@@ -71,7 +68,6 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary }) => {
         </div>
       </div>
 
-      {/* 4. ACHIEVEMENT */}
       <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-card">
         <div className="flex items-center justify-between">
           <div>
