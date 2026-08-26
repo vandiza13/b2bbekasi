@@ -20,12 +20,16 @@ export const DetailModal: React.FC<DetailModalProps> = ({
   onlyBelowTarget = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterBelowOnly, setFilterBelowOnly] = useState(onlyBelowTarget);
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'COMPLY' | 'BELOW'>(
+    onlyBelowTarget ? 'BELOW' : 'ALL'
+  );
 
   useEffect(() => {
-    setFilterBelowOnly(onlyBelowTarget);
+    setFilterStatus(onlyBelowTarget ? 'BELOW' : 'ALL');
     setSearchTerm('');
   }, [isOpen, onlyBelowTarget, metric, selectedWeek]);
+
+  const isAssurance = metric?.id.startsWith('ASR_') || false;
 
   const activeTickets: TicketItem[] = useMemo(() => {
     if (!metric) return [];
@@ -60,7 +64,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 
   const displayedTickets = useMemo(() => {
     return activeTickets.filter((t) => {
-      if (filterBelowOnly && t.isComply) return false;
+      if (filterStatus === 'COMPLY' && !t.isComply) return false;
+      if (filterStatus === 'BELOW' && t.isComply) return false;
       if (!searchTerm) return true;
       const q = searchTerm.toLowerCase();
       return (
@@ -71,7 +76,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
         (t.summary && t.summary.toLowerCase().includes(q))
       );
     });
-  }, [activeTickets, filterBelowOnly, searchTerm]);
+  }, [activeTickets, filterStatus, searchTerm]);
 
   if (!isOpen || !metric) return null;
 
@@ -99,7 +104,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -121,13 +126,17 @@ export const DetailModal: React.FC<DetailModalProps> = ({
               </div>
             </div>
             <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Tiket</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {isAssurance ? 'Tidak Gaul' : 'Total Tiket'}
+              </span>
               <div className="text-2xl font-black text-slate-900 mt-0.5">
-                {activeTotal}
+                {isAssurance ? activeComply : activeTotal}
               </div>
             </div>
             <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Below Target</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {isAssurance ? 'Gaul' : 'Below Target'}
+              </span>
               <div className={`text-2xl font-black mt-0.5 ${activeBelow > 0 ? 'text-rose-500' : 'text-slate-400'}`}>
                 {activeBelow}
               </div>
@@ -139,7 +148,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
               <div className="flex items-center gap-2 mb-3">
                 <Building className="w-4 h-4 text-blue-600" />
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                  Service Area
+                  Service Area Breakdown
                 </h3>
               </div>
 
@@ -150,8 +159,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                       <tr>
                         <th className="px-4 py-3">Service Area</th>
                         <th className="px-4 py-3 text-center">Total</th>
-                        <th className="px-4 py-3 text-center text-emerald-600">Comply</th>
-                        <th className="px-4 py-3 text-center text-rose-500">Below</th>
+                        <th className="px-4 py-3 text-center text-emerald-600">
+                          {isAssurance ? 'Tidak Gaul' : 'Comply'}
+                        </th>
+                        <th className="px-4 py-3 text-center text-rose-500">
+                          {isAssurance ? 'Gaul' : 'Below'}
+                        </th>
                         <th className="px-4 py-3 text-right">Real</th>
                       </tr>
                     </thead>
@@ -186,22 +199,48 @@ export const DetailModal: React.FC<DetailModalProps> = ({
               <div className="flex items-center gap-2">
                 <Ticket className="w-4 h-4 text-slate-500" />
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                  Ticket Detail ({displayedTickets.length} Ticket)
+                  Daftar Tiket ({displayedTickets.length} dari {activeTotal} Tiket)
                 </h3>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setFilterBelowOnly(!filterBelowOnly)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
-                    filterBelowOnly
-                      ? 'bg-rose-50 text-rose-600 border-rose-200'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {filterBelowOnly ? 'Semua Tiket' : 'Hanya Below Target'}
-                </button>
+                <div className="inline-flex rounded-xl bg-slate-100 p-0.5 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setFilterStatus('ALL')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                      filterStatus === 'ALL'
+                        ? 'bg-white text-slate-900 font-bold shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Semua ({activeTotal})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterStatus('COMPLY')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                      filterStatus === 'COMPLY'
+                        ? 'bg-emerald-50 text-emerald-700 font-bold shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {isAssurance ? `Tidak Gaul (${activeComply})` : `Comply (${activeComply})`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterStatus('BELOW')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                      filterStatus === 'BELOW'
+                        ? 'bg-rose-50 text-rose-700 font-bold shadow-xs'
+                        : activeBelow > 0
+                        ? 'text-rose-600 font-semibold hover:text-rose-700'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {isAssurance ? `Gaul (${activeBelow})` : `Not Comply (${activeBelow})`}
+                  </button>
+                </div>
 
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" />
@@ -210,7 +249,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     placeholder="Cari ID, Customer, STO..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 pr-3 py-1 text-xs rounded-lg bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 w-48 sm:w-56"
+                    className="pl-8 pr-3 py-1 text-xs rounded-lg bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 w-44 sm:w-52"
                   />
                 </div>
               </div>
@@ -222,56 +261,66 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-200">
                     <tr>
                       <th className="px-4 py-3">#</th>
-                      <th className="px-4 py-3">Tiket</th>
+                      <th className="px-4 py-3">Tiket / Service No</th>
                       <th className="px-4 py-3">Customer</th>
                       <th className="px-4 py-3">Service Area</th>
                       <th className="px-4 py-3">Workzone</th>
-                      <th className="px-4 py-3">TTR / Tanggal</th>
+                      <th className="px-4 py-3">TTR / Durasi</th>
                       <th className="px-4 py-3">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {displayedTickets.length > 0 ? (
-                      displayedTickets.map((t, idx) => (
-                        <tr key={t.incidentId} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3 text-slate-400">{idx + 1}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-800">
-                            {t.incidentId}
-                          </td>
-                          <td className="px-4 py-3 text-slate-700">
-                            <div>{t.customerName}</div>
-                            {t.summary && (
-                              <div className="text-[10px] text-slate-400 line-clamp-1">{t.summary}</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
-                              {t.serviceAreaCode}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {t.workzone || t.serviceAreaCode}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-slate-600">
-                            {t.ttrMinutes !== null && t.ttrMinutes !== undefined ? `${t.ttrMinutes} mnt` : '-'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`rounded-full px-2 py-1 text-[10px] font-bold ${
-                                t.isComply
-                                  ? 'bg-emerald-50 text-emerald-700'
-                                  : 'bg-rose-50 text-rose-700'
-                              }`}
-                            >
-                              {t.isComply ? 'COMPLY' : 'BELOW TARGET'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                      displayedTickets.map((t, idx) => {
+                        const statusLabel = isAssurance
+                          ? (t.isComply ? 'TIDAK GAUL' : 'GAUL')
+                          : (t.isComply ? 'COMPLY' : 'NOT COMPLY');
+
+                        return (
+                          <tr key={`${t.incidentId}_${idx}`} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 text-slate-400">{idx + 1}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-800">
+                              {t.incidentId}
+                            </td>
+                            <td className="px-4 py-3 text-slate-700">
+                              <div className="font-medium text-slate-900">{t.customerName}</div>
+                              {t.summary && (
+                                <div className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{t.summary}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
+                                {t.serviceAreaCode}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-slate-600">
+                              {t.workzone || t.serviceAreaCode}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                              {t.ttrMinutes !== null && t.ttrMinutes !== undefined
+                                ? `${t.ttrMinutes} Jam`
+                                : '-'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`rounded-full px-2 py-1 text-[10px] font-bold ${
+                                  t.isComply
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-rose-50 text-rose-700 border border-rose-200 font-extrabold'
+                                }`}
+                              >
+                                {statusLabel}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
                         <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                          Tidak ada data ticket.
+                          {filterStatus === 'BELOW'
+                            ? 'Tidak ada tiket Below Target / Not Comply pada kategori ini (100% Comply).'
+                            : 'Tidak ada data ticket yang sesuai pencarian.'}
                         </td>
                       </tr>
                     )}
