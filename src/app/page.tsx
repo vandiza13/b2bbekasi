@@ -85,12 +85,17 @@ export default function DashboardPage() {
 
   const ttrMetrics = useMemo(() => {
     if (!data?.metrics) return [];
-    return data.metrics.filter((m) => !m.id.startsWith('ASR_'));
+    return data.metrics.filter((m) => m.id.startsWith('TTR_') || m.id.startsWith('MTTR_'));
   }, [data]);
 
   const assuranceMetrics = useMemo(() => {
     if (!data?.metrics) return [];
     return data.metrics.filter((m) => m.id.startsWith('ASR_'));
+  }, [data]);
+
+  const sqmMetrics = useMemo(() => {
+    if (!data?.metrics) return [];
+    return data.metrics.filter((m) => m.id.startsWith('SQM_'));
   }, [data]);
 
   return (
@@ -171,7 +176,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 ring-1 ring-inset ring-slate-200 shadow-2xs">
-                DATIN • HSI • WIFI
+                DATIN • HSI • WIFI • MTTR
               </div>
             </div>
 
@@ -206,6 +211,35 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
               {assuranceMetrics.map((metric) => (
+                <MetricCard
+                  key={metric.id}
+                  metric={metric}
+                  onOpenDetail={handleOpenDetail}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {sqmMetrics.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-end justify-between">
+              <div>
+                <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
+                  SQM Close Performance
+                </h2>
+                <p className="mt-0.5 text-xs font-medium text-slate-500">
+                  Monitoring % Close SQM HSI dan SQM DATIN
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-blue-700 ring-1 ring-inset ring-blue-200 shadow-2xs">
+                Solver + Relasi Gamas
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
+              {sqmMetrics.map((metric) => (
                 <MetricCard
                   key={metric.id}
                   metric={metric}
