@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { billedCustomers, incidentTickets, qIndexTickets } from '@/db/schema';
+import { billedCustomers, incidentTickets, qIndexTickets, sqmTickets } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { formatPeriodDisplay, INDICATORS } from '@/lib/kpi/constants';
 import { computeKpiMetrics, RawTicketInput } from '@/lib/kpi/engine';
@@ -76,6 +76,15 @@ export async function getStatsResponse(periodParam?: string): Promise<StatsRespo
     console.warn('[StatsAPI] Error fetching Q tickets:', err);
   }
 
+  let sqmForPeriod: (typeof sqmTickets.$inferSelect)[] = [];
+  try {
+    sqmForPeriod = await db.select().from(sqmTickets).where(
+      sql`TO_CHAR(${sqmTickets.reportedAt}, 'YYYY-MM') = ${period}`
+    );
+  } catch (err) {
+    console.warn('[StatsAPI] Error fetching SQM tickets:', err);
+  }
+
   const [billedHsi, billedDatin] = await Promise.all([
     loadBilledMap('HSI'),
     loadBilledMap('DATIN'),
@@ -85,7 +94,7 @@ export async function getStatsResponse(periodParam?: string): Promise<StatsRespo
   const qDatinData = buildQualityData(rawQTickets, 'DATIN', '2.70%', billedDatin);
 
   let metrics = [];
-  if (ticketsForPeriod.length > 0) {
+  if (ticketsForPeriod.length > 0 || sqmForPeriod.length > 0) {
     const mappedInputs: RawTicketInput[] = ticketsForPeriod.map(t => ({
       incidentId: t.incidentId,
       summary: t.summary,
@@ -94,6 +103,7 @@ export async function getStatsResponse(periodParam?: string): Promise<StatsRespo
       serviceId: t.serviceId,
       serviceType: t.serviceType,
       category: t.category as 'DATIN' | 'HSI' | 'WIFI',
+      uploadCategory: t.uploadCategory,
       reportedAt: t.reportedAt,
       resolvedAt: t.resolvedAt,
       ttrMinutes: t.ttrMinutes ? Number(t.ttrMinutes) : null,
@@ -104,7 +114,23 @@ export async function getStatsResponse(periodParam?: string): Promise<StatsRespo
       telegramId: t.telegramId,
       rawPayload: t.rawPayload as Record<string, unknown>,
     }));
-    const computed = computeKpiMetrics(mappedInputs);
+
+    const mappedSqm: RawTicketInput[] = sqmForPeriod.map(t => ({
+      incidentId: t.incidentId,
+      serviceAreaCode: t.serviceAreaCode || 'BEK',
+      customerName: t.customerName,
+      serviceId: t.serviceId,
+      serviceType: t.serviceType,
+      category: t.category as 'HSI' | 'DATIN',
+      uploadCategory: `SQM ${t.category}`,
+      reportedAt: t.reportedAt,
+      status: t.status || 'CLOSED',
+      isGaul: false,
+      isGuarantee: false,
+      rawPayload: t.rawPayload as Record<string, unknown>,
+    }));
+
+    const computed = computeKpiMetrics([...mappedInputs, ...mappedSqm]);
     metrics = computed.metrics;
   } else {
     metrics = INDICATORS.map((ind) => ({

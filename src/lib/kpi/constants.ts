@@ -128,6 +128,34 @@ export const INDICATORS: IndicatorDefinition[] = [
     category: 'WIFI',
     targetRate: 90.50,
     description: 'Non-Garansi Valid WIFI'
+  },
+  {
+    code: 'MTTR_SIPTRUNK',
+    name: 'Compliance-MTTR SIPTRUNK',
+    category: 'DATIN',
+    targetRate: 100.00,
+    description: 'MTTR SIPTRUNK (TTR)'
+  },
+  {
+    code: 'MTTR_DWDM',
+    name: 'Compliance-MTTR DWDM',
+    category: 'DATIN',
+    targetRate: 100.00,
+    description: 'MTTR DWDM (TTR)'
+  },
+  {
+    code: 'SQM_HSI',
+    name: '% Close SQM HSI',
+    category: 'HSI',
+    targetRate: 79.00,
+    description: '% Close SQM HSI'
+  },
+  {
+    code: 'SQM_DATIN',
+    name: '% Close SQM DATIN',
+    category: 'DATIN',
+    targetRate: 92.00,
+    description: '% Close SQM DATIN'
   }
 ];
 

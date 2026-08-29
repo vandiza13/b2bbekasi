@@ -7,9 +7,10 @@ export interface RawTicketInput {
   serviceAreaCode: string;
   customerName?: string | null;
   serviceId?: string | null;
-  serviceType?: string | null;
+  serviceType: string | null;
   category: 'DATIN' | 'HSI' | 'WIFI';
-  reportedAt: Date;
+  uploadCategory?: string | null;
+  reportedAt: Date | null;
   resolvedAt?: Date | null;
   ttrMinutes?: number | null;
   status: string;
@@ -96,6 +97,18 @@ export function evaluateTicketCompliance(ticket: RawTicketInput, indicatorCode: 
       if (ticket.category !== 'WIFI') return false;
       return gaulStatus(ticket) === 'TIDAK GAUL';
 
+    case 'MTTR_SIPTRUNK':
+      return complyByFlagOrMinutes(p, ['col_52', 'comply'], ticket.ttrMinutes, 240); // 4 hours
+
+    case 'MTTR_DWDM':
+      return complyByFlagOrMinutes(p, ['col_52', 'comply'], ticket.ttrMinutes, 204); // 3.4 hours
+
+    case 'SQM_HSI':
+    case 'SQM_DATIN': {
+      const flag = String(p?.['flag_close'] || p?.['col_26'] || '').trim().toUpperCase();
+      return ['SOLVER BY TSC', 'SOLVER NOT BY TSC'].includes(flag);
+    }
+
     default:
       return false;
   }
@@ -138,6 +151,26 @@ export function filterTicketsForIndicator(tickets: RawTicketInput[], indicatorCo
     case 'TTR_WIFI':
     case 'ASR_GUARANTEE_WIFI':
       return tickets.filter((t) => t.category === 'WIFI');
+
+    case 'MTTR_SIPTRUNK':
+      return tickets.filter((t) => t.uploadCategory === 'SIP TRUNK' || t.serviceType === 'SIP TRUNK');
+    
+    case 'MTTR_DWDM':
+      return tickets.filter((t) => t.uploadCategory === 'DWDM' || t.serviceType === 'DWDM');
+
+    case 'SQM_HSI':
+      return tickets.filter((t) => {
+        if (t.uploadCategory !== 'SQM HSI') return false;
+        const flag = String(t.rawPayload?.['flag_close'] || t.rawPayload?.['col_26'] || '').trim().toUpperCase();
+        return !['PROACTIVE IBOOSTER', 'RELASI GAMAS', 'PELANGGAN SUDAH ONLINE'].includes(flag);
+      });
+
+    case 'SQM_DATIN':
+      return tickets.filter((t) => {
+        if (t.uploadCategory !== 'SQM DATIN') return false;
+        const flag = String(t.rawPayload?.['flag_close'] || t.rawPayload?.['col_26'] || '').trim().toUpperCase();
+        return !['PROACTIVE IBOOSTER', 'RELASI GAMAS', 'PELANGGAN SUDAH ONLINE'].includes(flag);
+      });
 
     default:
       return [];
@@ -187,7 +220,7 @@ export function computeKpiMetrics(allTickets: RawTicketInput[]): {
         status: t.status || 'CLOSED',
         ttrMinutes: t.ttrMinutes,
         isComply,
-        reportedAt: t.reportedAt.toISOString(),
+        reportedAt: t.reportedAt ? t.reportedAt.toISOString() : new Date().toISOString(),
         resolvedAt: t.resolvedAt ? t.resolvedAt.toISOString() : null,
         summary: t.summary || undefined,
         workzone: getSalesAreaForSto(t.serviceAreaCode || 'BEK'),

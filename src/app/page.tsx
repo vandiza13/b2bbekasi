@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Header } from '@/components/dashboard/Header';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { DetailModal } from '@/components/dashboard/DetailModal';
 import { QualityCards, QualityData } from '@/components/dashboard/QualityCards';
 import { QualityModal } from '@/components/dashboard/QualityModal';
+import { TelegramPreviewModal } from '@/components/report/TelegramPreviewModal';
 import { StatsResponse, KpiMetric } from '@/types/kpi';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const [selectedQualityWeek, setSelectedQualityWeek] = useState<string | null>(null);
   const [selectedQualityTitle, setSelectedQualityTitle] = useState<string>('Quality Performance');
   const [isQualityModalOpen, setIsQualityModalOpen] = useState<boolean>(false);
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const d = new Date();
@@ -92,19 +94,17 @@ export default function DashboardPage() {
   }, [data]);
 
   return (
-    <div className="min-h-screen text-slate-800">
-
-      <Header
-        period={period}
-        onPeriodChange={handlePeriodChange}
-        isLoading={isLoading}
-        onRefresh={() => fetchStats(period)}
-      />
-
-      <main className="mx-auto max-w-[1600px] px-4 py-8 lg:px-8 lg:py-10">
-
+    <AppLayout
+      period={period}
+      onPeriodChange={handlePeriodChange}
+      isLoading={isLoading}
+      onRefresh={() => fetchStats(period)}
+      onOpenTelegram={() => setIsTelegramModalOpen(true)}
+    >
+      <div className="space-y-8">
+        
         {error && (
-          <div className="mb-6 flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-card">
+          <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-card">
             <div className="flex items-center gap-2.5">
               <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
               <span>{error}</span>
@@ -118,7 +118,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+        <section className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700 shadow-card">
               <span className="relative flex h-1.5 w-1.5">
@@ -133,7 +133,7 @@ export default function DashboardPage() {
             </h1>
 
             <p className="mt-1.5 max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
-              Monitoring TTR Performance, Assurance Guarantee, dan Quantity Performance berdasarkan Service Area.
+              Monitoring TTR, Assurance Guarantee, SQM, dan Quality Performance (Q-Index) Branch Bekasi.
             </p>
           </div>
 
@@ -159,19 +159,19 @@ export default function DashboardPage() {
         )}
 
         {ttrMetrics.length > 0 && (
-          <section className="mb-10">
-            <div className="mb-4 flex items-end justify-between">
+          <section className="space-y-4">
+            <div className="flex items-end justify-between">
               <div>
                 <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
                   TTR Performance
                 </h2>
                 <p className="mt-0.5 text-xs font-medium text-slate-500">
-                  Compliance berdasarkan indikator TTR
+                  Pencapaian SLA TTR untuk setiap sub-indikator (DATIN, HSI, WIFI)
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 ring-1 ring-inset ring-slate-200">
-                DATIN · HSI · WIFI
+              <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 ring-1 ring-inset ring-slate-200 shadow-2xs">
+                DATIN • HSI • WIFI
               </div>
             </div>
 
@@ -188,18 +188,18 @@ export default function DashboardPage() {
         )}
 
         {assuranceMetrics.length > 0 && (
-          <section className="mb-10">
-            <div className="mb-4 flex items-end justify-between">
+          <section className="space-y-4">
+            <div className="flex items-end justify-between">
               <div>
                 <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
                   Assurance Guarantee
                 </h2>
                 <p className="mt-0.5 text-xs font-medium text-slate-500">
-                  Monitoring kualitas tiket berdasarkan status GAUL
+                  Rasio tiket bebas Gangguan Ulang (GAUL) / Non-Garansi Valid
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 ring-1 ring-inset ring-slate-200">
+              <div className="rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 ring-1 ring-inset ring-slate-200 shadow-2xs">
                 Non-Garansi Valid
               </div>
             </div>
@@ -217,7 +217,7 @@ export default function DashboardPage() {
         )}
 
         {data && (data.qHsi || data.qDatin) && (
-          <div className="mb-10">
+          <div>
             <QualityCards
               qHsi={data.qHsi}
               qDatin={data.qDatin}
@@ -231,7 +231,7 @@ export default function DashboardPage() {
           Dashboard Branch Bekasi <span className="mx-1 text-slate-300">•</span> TTR, Assurance &amp; Quality Performance Monitoring
         </footer>
 
-      </main>
+      </div>
 
       <DetailModal
         isOpen={isDetailOpen}
@@ -248,6 +248,12 @@ export default function DashboardPage() {
         selectedWeek={selectedQualityWeek}
         title={selectedQualityTitle}
       />
-    </div>
+
+      <TelegramPreviewModal
+        isOpen={isTelegramModalOpen}
+        onClose={() => setIsTelegramModalOpen(false)}
+        period={period}
+      />
+    </AppLayout>
   );
 }

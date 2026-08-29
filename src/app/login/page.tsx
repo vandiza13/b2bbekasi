@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Loader2, LogIn, AlertCircle, Lock } from 'lucide-react';
+import { Loader2, LogIn, AlertCircle } from 'lucide-react';
+import { BrandLogo } from '@/components/layout/BrandLogo';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -34,34 +35,32 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-5">
+    <div className="flex min-h-screen items-center justify-center bg-[#f6f7f9] p-5 text-slate-800 selection:bg-blue-500 selection:text-white">
       <div className="w-full max-w-sm">
 
-        <div className="mb-7 flex flex-col items-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 shadow-lg shadow-blue-500/25 ring-1 ring-white/30">
-            <span className="text-base font-extrabold tracking-wide text-white">KPI</span>
-          </div>
-          <h1 className="mt-5 text-xl font-extrabold tracking-tight text-slate-900">
-            Dashboard Branch Bekasi
+        <div className="mb-8 flex flex-col items-center">
+          <BrandLogo size="lg" showText={false} theme="light" />
+          <h1 className="mt-4 text-2xl font-black tracking-tight text-slate-900">
+            BGES BEKASI
           </h1>
-          <p className="mt-1 text-xs font-medium text-slate-500">
-            Masuk untuk mengakses monitoring performa
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            Performance Portal • Branch Bekasi
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-3xl border border-slate-200/80 bg-white px-6 py-8 shadow-card"
+          className="rounded-3xl border border-slate-200/80 bg-white p-7 shadow-card space-y-4"
         >
           {errorMsg && (
-            <div className="mb-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700">
-              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           <label className="block">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Username
             </span>
             <input
@@ -71,13 +70,13 @@ export default function LoginPage() {
               autoComplete="username"
               autoFocus
               required
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-medium text-slate-800 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
               placeholder="Masukkan username"
             />
           </label>
 
-          <label className="mt-4 block">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          <label className="block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Password
             </span>
             <input
@@ -86,7 +85,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               required
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-medium text-slate-800 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
               placeholder="Masukkan password"
             />
           </label>
@@ -94,7 +93,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={!username || !password || isLoading}
-            className="mt-7 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:from-blue-500 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+            className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <>
@@ -104,16 +103,15 @@ export default function LoginPage() {
             ) : (
               <>
                 <LogIn className="h-4 w-4" />
-                <span>Masuk</span>
+                <span>Masuk ke Dashboard</span>
               </>
             )}
           </button>
         </form>
 
-        <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400">
-          <Lock className="h-3 w-3" />
-          <span>Akses terbatas untuk internal Branch Bekasi</span>
-        </div>
+        <p className="mt-8 text-center text-xs text-slate-400 font-medium">
+          Sistem Monitoring Branch Bekasi &copy; {new Date().getFullYear()}
+        </p>
 
       </div>
     </div>

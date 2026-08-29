@@ -126,66 +126,6 @@ export async function POST(req: NextRequest) {
             }
           });
         }
-
-        // Recompute KPI hanya untuk periode yang di-upload agar tidak tercampur bulan lain
-        const existingTickets = await tx.select().from(incidentTickets).where(
-          sql`TO_CHAR(${incidentTickets.reportedAt}, 'YYYY-MM') = ${detectedPeriod}`
-        );
-        const mappedAllTickets: RawTicketInput[] = existingTickets.map(t => ({
-          incidentId: t.incidentId,
-          summary: t.summary,
-          serviceAreaCode: t.serviceAreaCode || 'BEK',
-          customerName: t.customerName,
-          serviceId: t.serviceId,
-          serviceType: t.serviceType,
-          category: t.category as 'DATIN' | 'HSI' | 'WIFI',
-          reportedAt: t.reportedAt,
-          resolvedAt: t.resolvedAt,
-          ttrMinutes: t.ttrMinutes ? Number(t.ttrMinutes) : null,
-          status: t.status,
-          isGaul: t.isGaul || false,
-          isGuarantee: t.isGuarantee || false,
-          technicianName: t.technicianName,
-          telegramId: t.telegramId,
-          rawPayload: t.rawPayload as Record<string, unknown>,
-        }));
-
-        const { metrics, summary } = computeKpiMetrics(mappedAllTickets);
-        calculatedMetrics = metrics;
-        calculatedSummary = summary;
-
-        for (const m of metrics) {
-          const snapshotId = `${detectedPeriod}_${m.id}`;
-          await tx.insert(kpiSnapshots).values({
-            id: snapshotId,
-            period: detectedPeriod,
-            indicatorCode: m.id,
-            category: m.category,
-            targetRate: String(m.targetRate),
-            realRate: String(m.realRate),
-            totalTickets: m.totalTickets,
-            achievedTickets: m.achievedTickets,
-            achievementRate: String(m.achievementRate),
-            status: m.status,
-            weeklyBreakdown: m.weekly,
-            syncedToSheets: false,
-          }).onConflictDoUpdate({
-            target: kpiSnapshots.id,
-            set: {
-              period: sql`EXCLUDED.period`,
-              indicatorCode: sql`EXCLUDED.indicator_code`,
-              category: sql`EXCLUDED.category`,
-              targetRate: sql`EXCLUDED.target_rate`,
-              realRate: sql`EXCLUDED.real_rate`,
-              totalTickets: sql`EXCLUDED.total_tickets`,
-              achievedTickets: sql`EXCLUDED.achieved_tickets`,
-              achievementRate: sql`EXCLUDED.achievement_rate`,
-              status: sql`EXCLUDED.status`,
-              weeklyBreakdown: sql`EXCLUDED.weekly_breakdown`,
-              updatedAt: new Date(),
-            }
-          });
-        }
       }
 
       if (routingInfo.targetTable === 'sqm_tickets' && parsedRows.length > 0) {
@@ -283,6 +223,87 @@ export async function POST(req: NextRequest) {
             }
           });
         }
+      }
+
+      // Recompute KPI untuk periode yang di-upload
+      const existingTickets = await tx.select().from(incidentTickets).where(
+        sql`TO_CHAR(${incidentTickets.reportedAt}, 'YYYY-MM') = ${detectedPeriod}`
+      );
+      const mappedAllTickets: RawTicketInput[] = existingTickets.map(t => ({
+        incidentId: t.incidentId,
+        summary: t.summary,
+        serviceAreaCode: t.serviceAreaCode || 'BEK',
+        customerName: t.customerName,
+        serviceId: t.serviceId,
+        serviceType: t.serviceType,
+        category: t.category as 'DATIN' | 'HSI' | 'WIFI',
+        uploadCategory: t.uploadCategory,
+        reportedAt: t.reportedAt,
+        resolvedAt: t.resolvedAt,
+        ttrMinutes: t.ttrMinutes ? Number(t.ttrMinutes) : null,
+        status: t.status,
+        isGaul: t.isGaul || false,
+        isGuarantee: t.isGuarantee || false,
+        technicianName: t.technicianName,
+        telegramId: t.telegramId,
+        rawPayload: t.rawPayload as Record<string, unknown>,
+      }));
+
+      const existingSqm = await tx.select().from(sqmTickets).where(
+        sql`TO_CHAR(${sqmTickets.reportedAt}, 'YYYY-MM') = ${detectedPeriod}`
+      );
+      const mappedSqmTickets: RawTicketInput[] = existingSqm.map(t => ({
+        incidentId: t.incidentId,
+        serviceAreaCode: t.serviceAreaCode || 'BEK',
+        customerName: t.customerName,
+        serviceId: t.serviceId,
+        serviceType: t.serviceType,
+        category: t.category as 'HSI' | 'DATIN',
+        uploadCategory: `SQM ${t.category}`,
+        reportedAt: t.reportedAt,
+        status: t.status,
+        isGaul: false,
+        isGuarantee: false,
+        rawPayload: t.rawPayload as Record<string, unknown>,
+      }));
+
+      const combinedTickets = [...mappedAllTickets, ...mappedSqmTickets];
+
+      const { metrics, summary } = computeKpiMetrics(combinedTickets);
+      calculatedMetrics = metrics;
+      calculatedSummary = summary;
+
+      for (const m of metrics) {
+        const snapshotId = `${detectedPeriod}_${m.id}`;
+        await tx.insert(kpiSnapshots).values({
+          id: snapshotId,
+          period: detectedPeriod,
+          indicatorCode: m.id,
+          category: m.category,
+          targetRate: String(m.targetRate),
+          realRate: String(m.realRate),
+          totalTickets: m.totalTickets,
+          achievedTickets: m.achievedTickets,
+          achievementRate: String(m.achievementRate),
+          status: m.status,
+          weeklyBreakdown: m.weekly,
+          syncedToSheets: false,
+        }).onConflictDoUpdate({
+          target: kpiSnapshots.id,
+          set: {
+            period: sql`EXCLUDED.period`,
+            indicatorCode: sql`EXCLUDED.indicator_code`,
+            category: sql`EXCLUDED.category`,
+            targetRate: sql`EXCLUDED.target_rate`,
+            realRate: sql`EXCLUDED.real_rate`,
+            totalTickets: sql`EXCLUDED.total_tickets`,
+            achievedTickets: sql`EXCLUDED.achieved_tickets`,
+            achievementRate: sql`EXCLUDED.achievement_rate`,
+            status: sql`EXCLUDED.status`,
+            weeklyBreakdown: sql`EXCLUDED.weekly_breakdown`,
+            updatedAt: new Date(),
+          }
+        });
       }
     });
 
