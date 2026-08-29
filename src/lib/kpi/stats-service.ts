@@ -156,6 +156,9 @@ export async function getStatsResponse(periodParam?: string): Promise<StatsRespo
   const indicatorsForSummary: Array<{ real: number; target: number | null; type: 'higher' | 'lower' }> = [];
 
   for (const m of metrics) {
+    if (m.id === 'MTTR_SIPTRUNK' || m.id === 'MTTR_DWDM') {
+      continue;
+    }
     indicatorsForSummary.push({
       real: m.realRate,
       target: m.targetRate,
