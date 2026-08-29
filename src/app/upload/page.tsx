@@ -206,13 +206,35 @@ export default function UploadPage() {
               </p>
             </div>
 
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 shrink-0 cursor-pointer shadow-2xs"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Kembali</span>
-            </Link>
+            <div className="flex flex-col gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={async () => {
+                  addLog('Menjadwalkan sinkronisasi manual untuk semua kategori...', 'process');
+                  try {
+                    await fetch('/api/sheets/sync', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ category: 'all' }),
+                    });
+                    setSyncPolling(true);
+                  } catch {
+                    addLog('Gagal menjadwalkan sinkronisasi.', 'error');
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-700 shadow-sm cursor-pointer"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Sync Spreadsheet Manual
+              </button>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 cursor-pointer shadow-2xs"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Kembali ke Dashboard
+              </Link>
+            </div>
           </div>
         </div>
 
