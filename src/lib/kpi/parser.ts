@@ -227,7 +227,11 @@ export function parseExcelRowsUniversally(
     const rawSummary = summaryCol !== -1 ? row[summaryCol] : undefined;
     const summary = rawSummary ? String(rawSummary).trim() : null;
 
-    const reportedAt = parseDateSafe(rawDate) || new Date();
+    const reportedAt = parseDateSafe(rawDate);
+    if (!reportedAt) {
+      continue; // GAS Parity: Ignore rows without a valid KPI date (e.g. non-HVC tickets with empty dates)
+    }
+    
     if (!detectedPeriod) {
       detectedPeriod = extractPeriodFromDate(reportedAt);
     }
