@@ -85,7 +85,7 @@ export default function DashboardPage() {
 
   const ttrMetrics = useMemo(() => {
     if (!data?.metrics) return [];
-    return data.metrics.filter((m) => m.id.startsWith('TTR_') || m.id.startsWith('MTTR_'));
+    return data.metrics.filter((m) => m.id.startsWith('TTR_'));
   }, [data]);
 
   const assuranceMetrics = useMemo(() => {
