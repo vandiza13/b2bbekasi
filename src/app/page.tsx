@@ -102,7 +102,7 @@ export default function DashboardPage() {
     if (!data) return [];
     return data.metrics.filter((m) => {
       // Exclude MTTR_SIPTRUNK and MTTR_DWDM to match GAS UI
-      if (m.code === 'MTTR_SIPTRUNK' || m.code === 'MTTR_DWDM') return false;
+      if (m.id === 'MTTR_SIPTRUNK' || m.id === 'MTTR_DWDM') return false;
       return m.id.startsWith('TTR_') || m.id.startsWith('MTTR_');
     });
   }, [data]);
