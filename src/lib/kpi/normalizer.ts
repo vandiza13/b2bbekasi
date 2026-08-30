@@ -78,6 +78,23 @@ export function parseDateSafe(dateRaw: unknown): Date | null {
   const str = String(dateRaw).trim();
   if (!str) return null;
 
+  // Format YYYYMMDD (e.g. '20260819' from SQM exports)
+  if (/^\d{8}$/.test(str)) {
+    const y = parseInt(str.substring(0, 4), 10);
+    const m = parseInt(str.substring(4, 6), 10);
+    const d = parseInt(str.substring(6, 8), 10);
+    const parsed = new Date(Date.UTC(y, m - 1, d));
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  // Format YYYYMM (e.g. '202608' — bulan saja, set ke tanggal 1)
+  if (/^\d{6}$/.test(str)) {
+    const y = parseInt(str.substring(0, 4), 10);
+    const m = parseInt(str.substring(4, 6), 10);
+    const parsed = new Date(Date.UTC(y, m - 1, 1));
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
   // Coba parse standar ISO/EN (misal YYYY-MM-DD atau MM/DD/YYYY)
   const fallbackParsed = new Date(str);
 
