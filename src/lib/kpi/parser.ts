@@ -187,17 +187,17 @@ export function parseExcelRowsUniversally(
       rawDate = row[12];
       rawSto = row[27];
     } else if (category === 'SQM HSI') {
-      rawId = (idCol !== -1 ? row[idCol] : undefined) || row[0];
-      rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[2];
-      rawSto = (stoCol !== -1 ? row[stoCol] : undefined) || row[4] || row[5] || row[3];
-      rawDate = row[16] || (dateCol !== -1 ? row[dateCol] : undefined);
-      rawTtr = (ttrCol !== -1 ? row[ttrCol] : undefined) || row[8] || row[9];
+      rawId = (idCol !== -1 ? row[idCol] : undefined) || row[5];
+      rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[6];
+      rawSto = (stoCol !== -1 ? row[stoCol] : undefined) || row[24];
+      rawDate = (dateCol !== -1 ? row[dateCol] : undefined) || row[1];
+      rawComply = row[26];
     } else if (category === 'SQM DATIN') {
-      rawId = (idCol !== -1 ? row[idCol] : undefined) || row[0];
-      rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[2];
-      rawSto = (stoCol !== -1 ? row[stoCol] : undefined) || row[4] || row[5] || row[3];
-      rawDate = row[45] || (dateCol !== -1 ? row[dateCol] : undefined);
-      rawTtr = (ttrCol !== -1 ? row[ttrCol] : undefined) || row[8] || row[9];
+      rawId = (idCol !== -1 ? row[idCol] : undefined) || row[5];
+      rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[6];
+      rawSto = (stoCol !== -1 ? row[stoCol] : undefined) || row[24];
+      rawDate = (dateCol !== -1 ? row[dateCol] : undefined) || row[1];
+      rawComply = row[26];
     } else {
       rawId = (idCol !== -1 ? row[idCol] : undefined) || row[0];
       rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[1] || row[2];
