@@ -106,7 +106,7 @@ export function evaluateTicketCompliance(ticket: RawTicketInput, indicatorCode: 
     case 'SQM_HSI':
     case 'SQM_DATIN': {
       const flag = String(p?.['flag_close'] || p?.['col_26'] || '').trim().toUpperCase();
-      return ['SOLVER BY TSC', 'SOLVER NOT BY TSC'].includes(flag);
+      return ['SOLVER BY TSC', 'SOLVER NOT BY TSC', 'RELASI GAMAS'].includes(flag);
     }
 
     default:
@@ -162,14 +162,14 @@ export function filterTicketsForIndicator(tickets: RawTicketInput[], indicatorCo
       return tickets.filter((t) => {
         if (t.uploadCategory !== 'SQM HSI') return false;
         const flag = String(t.rawPayload?.['flag_close'] || t.rawPayload?.['col_26'] || '').trim().toUpperCase();
-        return !['PROACTIVE IBOOSTER', 'RELASI GAMAS', 'PELANGGAN SUDAH ONLINE'].includes(flag);
+        return !['PROACTIVE IBOOSTER', 'PELANGGAN SUDAH ONLINE'].includes(flag);
       });
 
     case 'SQM_DATIN':
       return tickets.filter((t) => {
         if (t.uploadCategory !== 'SQM DATIN') return false;
         const flag = String(t.rawPayload?.['flag_close'] || t.rawPayload?.['col_26'] || '').trim().toUpperCase();
-        return !['PROACTIVE IBOOSTER', 'RELASI GAMAS', 'PELANGGAN SUDAH ONLINE'].includes(flag);
+        return !['PROACTIVE IBOOSTER', 'PELANGGAN SUDAH ONLINE'].includes(flag);
       });
 
     default:

@@ -30,8 +30,11 @@ export function parseExcelRowsUniversally(
   parsedRows: ParsedRowResult[];
   detectedPeriod: string;
 } {
-  const firstSheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[firstSheetName];
+  const routing = CATEGORY_ROUTING_MAP[category];
+  const targetSheetName = (routing && workbook.Sheets[routing.targetSheet])
+    ? routing.targetSheet
+    : (workbook.Sheets[category] ? category : workbook.SheetNames[0]);
+  const sheet = workbook.Sheets[targetSheetName];
   if (!sheet) {
     return { parsedRows: [], detectedPeriod: explicitPeriod || extractPeriodFromDate(new Date()) };
   }
@@ -95,7 +98,6 @@ export function parseExcelRowsUniversally(
   const statusCol = findColIndex('status', 'ticket status', 'status tiket');
   const kategoriCol = findColIndex('kategori', 'category', 'kategori_k1_k2_k3', 'sub_kategori', 'sub category');
 
-  const routing = CATEGORY_ROUTING_MAP[category];
   const parsedRows: ParsedRowResult[] = [];
   let detectedPeriod = explicitPeriod || '';
 
