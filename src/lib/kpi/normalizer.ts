@@ -95,40 +95,38 @@ export function parseDateSafe(dateRaw: unknown): Date | null {
     return isNaN(parsed.getTime()) ? null : parsed;
   }
 
-  // Coba parse standar ISO/EN (misal YYYY-MM-DD atau MM/DD/YYYY)
-  const fallbackParsed = new Date(str);
-
-  // Format DD/MM/YYYY HH:mm:ss atau MM/DD/YYYY HH:mm:ss
-  if (str.includes('/')) {
+  // Format DD/MM/YYYY HH:mm:ss atau YYYY-MM-DD HH:mm:ss
+  if (str.includes('/') || str.includes('-')) {
     const [datePart, timePart] = str.split(' ');
-    const parts = datePart.split('/').map(Number);
+    const sep = datePart.includes('/') ? '/' : '-';
+    const parts = datePart.split(sep).map(Number);
     if (parts.length === 3) {
-      let [p1, p2, y] = parts;
-      const fullYear = y < 100 ? 2000 + y : y;
+      let [p1, p2, p3] = parts;
       const [hr, min, sec] = timePart ? timePart.split(':').map(Number) : [0, 0, 0];
-      
-      let d = p1, m = p2;
-      // Heuristik: jika p1 > 12, p1 pasti hari (DD/MM). Jika p2 > 12, p2 pasti hari (MM/DD).
-      // Export GAS defaultnya sering MM/DD/YYYY dari database.
-      if (p1 > 12) {
-        d = p1; m = p2; // DD/MM/YYYY
-      } else if (p2 > 12) {
-        m = p1; d = p2; // MM/DD/YYYY
+
+      let y: number, m: number, d: number;
+      if (p1 > 1000) {
+        // YYYY-MM-DD or YYYY/MM/DD
+        y = p1; m = p2; d = p3;
       } else {
-        // Jika keduanya <= 12 (misal 08/02/2026), kita prioritaskan MM/DD/YYYY jika Date.parse standar berhasil mem-parse-nya ke MM/DD
-        if (!isNaN(fallbackParsed.getTime()) && fallbackParsed.getMonth() + 1 === p1 && fallbackParsed.getDate() === p2) {
-           m = p1; d = p2;
+        // p3 is year
+        y = p3 < 100 ? 2000 + p3 : p3;
+        if (p2 > 12) {
+          // MM/DD/YYYY (p2 is day because > 12)
+          m = p1; d = p2;
         } else {
-           // Default ke MM/DD/YYYY sesuai format export system
-           m = p1; d = p2;
+          // Standard Indonesian format: DD/MM/YYYY
+          d = p1; m = p2;
         }
       }
 
-      const parsed = new Date(Date.UTC(fullYear, m - 1, d, hr || 0, min || 0, sec || 0));
+      const parsed = new Date(Date.UTC(y, m - 1, d, hr || 0, min || 0, sec || 0));
       return isNaN(parsed.getTime()) ? null : parsed;
     }
   }
 
+  // Coba parse standar ISO/EN fallback
+  const fallbackParsed = new Date(str);
   if (!isNaN(fallbackParsed.getTime())) {
     return fallbackParsed;
   }
