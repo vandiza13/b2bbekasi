@@ -78,22 +78,45 @@ export function parseDateSafe(dateRaw: unknown): Date | null {
   const str = String(dateRaw).trim();
   if (!str) return null;
 
-  // Format DD/MM/YYYY HH:mm:ss atau DD/MM/YYYY
+  // Coba parse standar ISO/EN (misal YYYY-MM-DD atau MM/DD/YYYY)
+  const fallbackParsed = new Date(str);
+
+  // Format DD/MM/YYYY HH:mm:ss atau MM/DD/YYYY HH:mm:ss
   if (str.includes('/')) {
     const [datePart, timePart] = str.split(' ');
     const parts = datePart.split('/').map(Number);
     if (parts.length === 3) {
-      const [d, m, y] = parts;
+      let [p1, p2, y] = parts;
       const fullYear = y < 100 ? 2000 + y : y;
       const [hr, min, sec] = timePart ? timePart.split(':').map(Number) : [0, 0, 0];
+      
+      let d = p1, m = p2;
+      // Heuristik: jika p1 > 12, p1 pasti hari (DD/MM). Jika p2 > 12, p2 pasti hari (MM/DD).
+      // Export GAS defaultnya sering MM/DD/YYYY dari database.
+      if (p1 > 12) {
+        d = p1; m = p2; // DD/MM/YYYY
+      } else if (p2 > 12) {
+        m = p1; d = p2; // MM/DD/YYYY
+      } else {
+        // Jika keduanya <= 12 (misal 08/02/2026), kita prioritaskan MM/DD/YYYY jika Date.parse standar berhasil mem-parse-nya ke MM/DD
+        if (!isNaN(fallbackParsed.getTime()) && fallbackParsed.getMonth() + 1 === p1 && fallbackParsed.getDate() === p2) {
+           m = p1; d = p2;
+        } else {
+           // Default ke MM/DD/YYYY sesuai format export system
+           m = p1; d = p2;
+        }
+      }
+
       const parsed = new Date(Date.UTC(fullYear, m - 1, d, hr || 0, min || 0, sec || 0));
       return isNaN(parsed.getTime()) ? null : parsed;
     }
   }
 
-  // Standard ISO/String date parsing
-  const parsed = new Date(str);
-  return isNaN(parsed.getTime()) ? null : parsed;
+  if (!isNaN(fallbackParsed.getTime())) {
+    return fallbackParsed;
+  }
+
+  return null;
 }
 
 export function extractPeriodFromDate(date: Date): string {

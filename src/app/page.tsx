@@ -83,18 +83,42 @@ export default function DashboardPage() {
     setIsQualityModalOpen(true);
   };
 
+  const handleSync = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/sheets/sync', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('Gagal melakukan sinkronisasi data dari Google Sheets.');
+      }
+      await fetchStats(period);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat sinkronisasi');
+      setIsLoading(false);
+    }
+  };
+
   const ttrMetrics = useMemo(() => {
-    if (!data?.metrics) return [];
-    return data.metrics.filter((m) => m.id.startsWith('TTR_'));
+    if (!data) return [];
+    return data.metrics.filter((m) => {
+      // Exclude MTTR_SIPTRUNK and MTTR_DWDM to match GAS UI
+      if (m.code === 'MTTR_SIPTRUNK' || m.code === 'MTTR_DWDM') return false;
+      return m.id.startsWith('TTR_') || m.id.startsWith('MTTR_');
+    });
   }, [data]);
 
   const assuranceMetrics = useMemo(() => {
-    if (!data?.metrics) return [];
+    if (!data) return [];
     return data.metrics.filter((m) => m.id.startsWith('ASR_'));
   }, [data]);
 
+  const qualityMetrics = useMemo(() => {
+    if (!data) return [];
+    return data.metrics.filter((m) => m.id.startsWith('Q_'));
+  }, [data]);
+
   const sqmMetrics = useMemo(() => {
-    if (!data?.metrics) return [];
+    if (!data) return [];
     return data.metrics.filter((m) => m.id.startsWith('SQM_'));
   }, [data]);
 
@@ -104,6 +128,7 @@ export default function DashboardPage() {
       onPeriodChange={handlePeriodChange}
       isLoading={isLoading}
       onRefresh={() => fetchStats(period)}
+      onSync={handleSync}
       onOpenTelegram={() => setIsTelegramModalOpen(true)}
     >
       <div className="space-y-8">

@@ -22,6 +22,7 @@ interface AppLayoutProps {
   isLoading?: boolean;
   onRefresh?: () => void;
   onOpenTelegram?: () => void;
+  onSync?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -36,6 +37,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   isLoading = false,
   onRefresh,
   onOpenTelegram,
+  onSync,
 }) => {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -159,43 +161,59 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </div>
             )}
 
-            {/* Refresh Button */}
-            {onRefresh && (
-              <button
-                type="button"
-                onClick={onRefresh}
-                disabled={isLoading}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 cursor-pointer"
-                title="Refresh Data"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
-              </button>
-            )}
+            {/* Controls */}
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
 
-            {/* Telegram Action */}
-            {onOpenTelegram && (
-              <button
-                type="button"
-                onClick={onOpenTelegram}
-                className="hidden sm:flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 transition hover:bg-sky-100 hover:text-sky-900 cursor-pointer shadow-2xs"
-                title="Kirim Laporan ke Telegram"
-              >
-                <Send className="w-3.5 h-3.5 text-sky-600" />
-                <span>Kirim Telegram</span>
-              </button>
-            )}
+              {/* Sync Button */}
+              {onSync && (
+                <button
+                  type="button"
+                  onClick={onSync}
+                  className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-2xs transition hover:bg-emerald-100 hover:text-emerald-900 cursor-pointer"
+                  title="Sync Manual ke Google Spreadsheet"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Sync GAS</span>
+                </button>
+              )}
 
-            {/* Upload Button */}
-            {pathname !== '/upload' && (
-              <Link
-                href="/upload"
-                className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-2xs transition hover:bg-blue-100 hover:text-blue-900 cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5 text-blue-600" />
-                <span className="hidden sm:inline">Upload</span>
-              </Link>
-            )}
+              {/* Refresh Button */}
+              {onRefresh && (
+                <button
+                  type="button"
+                  onClick={onRefresh}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 cursor-pointer"
+                  title="Refresh Dashboard"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+                </button>
+              )}
 
+              {/* Telegram Action */}
+              {onOpenTelegram && (
+                <button
+                  type="button"
+                  onClick={onOpenTelegram}
+                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 transition hover:bg-sky-100 hover:text-sky-900 cursor-pointer shadow-2xs"
+                  title="Kirim Laporan ke Telegram"
+                >
+                  <Send className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Kirim Telegram</span>
+                </button>
+              )}
+
+              {/* Upload Button */}
+              {pathname !== '/upload' && (
+                <Link
+                  href="/upload"
+                  className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-2xs transition hover:bg-blue-100 hover:text-blue-900 cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="hidden sm:inline">Upload</span>
+                </Link>
+              )}
+
+            </div>
           </div>
         </header>
 
