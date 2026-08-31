@@ -43,8 +43,7 @@ export function parseExcelRowsUniversally(
     header: 1,
     defval: '',
     blankrows: false,
-    raw: false,
-    dateNF: 'yyyy-mm-dd',
+    raw: true,
   });
 
   if (!raw2D || raw2D.length === 0) {
@@ -200,6 +199,11 @@ export function parseExcelRowsUniversally(
       rawSto = (stoCol !== -1 ? row[stoCol] : undefined) || row[24];
       rawDate = (dateCol !== -1 ? row[dateCol] : undefined) || row[1];
       rawComply = row[26];
+    } else if (category === 'OUTHSI' || category === 'OUTDATIN') {
+      rawId = (idCol !== -1 ? row[idCol] : undefined) || row[2] || row[0];
+      rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[23] || row[24];
+      rawSto = (stoCol !== -1 ? row[stoCol] : undefined) || row[6] || row[4];
+      rawDate = (dateCol !== -1 ? row[dateCol] : undefined) || row[0] || row[17];
     } else {
       rawId = (idCol !== -1 ? row[idCol] : undefined) || row[0];
       rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[1] || row[2];

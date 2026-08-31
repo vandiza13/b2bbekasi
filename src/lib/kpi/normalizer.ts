@@ -69,8 +69,24 @@ export function parseDateSafe(dateRaw: unknown): Date | null {
     return isNaN(dateRaw.getTime()) ? null : dateRaw;
   }
 
-  // Excel serial number (e.g. 45123.5)
+  // Number parsing (Excel serial number or numeric YYYYMMDD / YYYYMM)
   if (typeof dateRaw === 'number') {
+    // Numeric YYYYMMDD (e.g. 20260819 in SQM exports)
+    if (dateRaw >= 19000101 && dateRaw <= 20991231) {
+      const y = Math.floor(dateRaw / 10000);
+      const m = Math.floor((dateRaw % 10000) / 100);
+      const d = dateRaw % 100;
+      const parsed = new Date(Date.UTC(y, m - 1, d));
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    // Numeric YYYYMM (e.g. 202608 in SQM exports)
+    if (dateRaw >= 190001 && dateRaw <= 209912) {
+      const y = Math.floor(dateRaw / 100);
+      const m = dateRaw % 100;
+      const parsed = new Date(Date.UTC(y, m - 1, 1));
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    // Standard Excel serial number (e.g. 46233.5)
     const date = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
     return isNaN(date.getTime()) ? null : date;
   }
@@ -122,6 +138,37 @@ export function parseDateSafe(dateRaw: unknown): Date | null {
 
       const parsed = new Date(Date.UTC(y, m - 1, d, hr || 0, min || 0, sec || 0));
       return isNaN(parsed.getTime()) ? null : parsed;
+    }
+  }
+
+  // Format text month seperti '02-Aug-26', '02-Agu-2026', '2 Agustus 2026 10:00:00'
+  const indoMatch = str.match(/^(\d{1,2})[\s\-\/]([a-zA-Z]+)[\s\-\/](\d{2,4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/i);
+  if (indoMatch) {
+    const INDO_MONTHS: Record<string, number> = {
+      jan: 1, januari: 1,
+      feb: 2, peb: 2, februari: 2, pebruari: 2,
+      mar: 3, maret: 3,
+      apr: 4, april: 4,
+      mei: 5, may: 5,
+      jun: 6, juni: 6,
+      jul: 7, juli: 7,
+      agu: 8, agt: 8, aug: 8, agustus: 8, august: 8,
+      sep: 9, sept: 9, september: 9,
+      okt: 10, oct: 10, oktober: 10, october: 10,
+      nov: 11, nop: 11, november: 11, nopember: 11,
+      des: 12, dec: 12, desember: 12, december: 12
+    };
+    const d = parseInt(indoMatch[1], 10);
+    const mStr = indoMatch[2].toLowerCase();
+    let y = parseInt(indoMatch[3], 10);
+    if (y < 100) y += 2000;
+    const m = INDO_MONTHS[mStr];
+    if (m) {
+      const hr = parseInt(indoMatch[4] || '0', 10);
+      const min = parseInt(indoMatch[5] || '0', 10);
+      const sec = parseInt(indoMatch[6] || '0', 10);
+      const parsed = new Date(Date.UTC(y, m - 1, d, hr, min, sec));
+      if (!isNaN(parsed.getTime())) return parsed;
     }
   }
 
