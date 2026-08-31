@@ -118,7 +118,8 @@ export function filterTicketsForIndicator(tickets: RawTicketInput[], indicatorCo
   switch (indicatorCode) {
     case 'TTR_DATIN_K1':
       return tickets.filter((t) => {
-        if (t.category !== 'DATIN') return false;
+        if (t.uploadCategory && t.uploadCategory !== 'DATIN') return false;
+        if (!t.uploadCategory && t.category !== 'DATIN') return false;
         const p = t.rawPayload || {};
         const cat = String(p['kategori'] || p['col_64'] || t.serviceType || '').trim().toUpperCase();
         return cat === 'K1' || (t.summary && t.summary.toUpperCase().includes('K1'));
@@ -126,7 +127,8 @@ export function filterTicketsForIndicator(tickets: RawTicketInput[], indicatorCo
 
     case 'TTR_DATIN_K2':
       return tickets.filter((t) => {
-        if (t.category !== 'DATIN') return false;
+        if (t.uploadCategory && t.uploadCategory !== 'DATIN') return false;
+        if (!t.uploadCategory && t.category !== 'DATIN') return false;
         const p = t.rawPayload || {};
         const cat = String(p['kategori'] || p['col_64'] || t.serviceType || '').trim().toUpperCase();
         return cat === 'K2' || (t.summary && t.summary.toUpperCase().includes('K2'));
@@ -134,23 +136,24 @@ export function filterTicketsForIndicator(tickets: RawTicketInput[], indicatorCo
 
     case 'TTR_DATIN_K3':
       return tickets.filter((t) => {
-        if (t.category !== 'DATIN') return false;
+        if (t.uploadCategory && t.uploadCategory !== 'DATIN') return false;
+        if (!t.uploadCategory && t.category !== 'DATIN') return false;
         const p = t.rawPayload || {};
         const cat = String(p['kategori'] || p['col_64'] || t.serviceType || '').trim().toUpperCase();
         return cat === 'K3' || (t.summary && t.summary.toUpperCase().includes('K3'));
       });
 
     case 'ASR_GUARANTEE_DATIN':
-      return tickets.filter((t) => t.category === 'DATIN');
+      return tickets.filter((t) => (t.uploadCategory ? t.uploadCategory === 'DATIN' : t.category === 'DATIN'));
 
     case 'TTR_HSI_HVC_4H':
     case 'TTR_HSI_HVC_24H':
     case 'ASR_GUARANTEE_HSI':
-      return tickets.filter((t) => t.category === 'HSI');
+      return tickets.filter((t) => (t.uploadCategory ? t.uploadCategory === 'HSI' : t.category === 'HSI'));
 
     case 'TTR_WIFI':
     case 'ASR_GUARANTEE_WIFI':
-      return tickets.filter((t) => t.category === 'WIFI');
+      return tickets.filter((t) => (t.uploadCategory ? t.uploadCategory === 'WIFI' : t.category === 'WIFI'));
 
     case 'MTTR_SIPTRUNK':
       return tickets.filter((t) => t.uploadCategory === 'SIP TRUNK' || t.serviceType === 'SIP TRUNK');
