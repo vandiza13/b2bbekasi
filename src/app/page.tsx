@@ -246,6 +246,17 @@ export default function DashboardPage() {
           </section>
         )}
 
+        {data && (data.qHsi || data.qDatin) && (
+          <div>
+            <QualityCards
+              qHsi={data.qHsi}
+              qDatin={data.qDatin}
+              onOpenQualityModal={handleOpenQualityModal}
+              onOpenQualityWeeklyModal={handleOpenQualityWeeklyModal}
+            />
+          </div>
+        )}
+
         {sqmMetrics.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-end justify-between">
@@ -273,17 +284,6 @@ export default function DashboardPage() {
               ))}
             </div>
           </section>
-        )}
-
-        {data && (data.qHsi || data.qDatin) && (
-          <div>
-            <QualityCards
-              qHsi={data.qHsi}
-              qDatin={data.qDatin}
-              onOpenQualityModal={handleOpenQualityModal}
-              onOpenQualityWeeklyModal={handleOpenQualityWeeklyModal}
-            />
-          </div>
         )}
 
         <footer className="border-t border-slate-200/80 py-6 text-center text-xs font-medium text-slate-400">
