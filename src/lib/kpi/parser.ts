@@ -135,13 +135,21 @@ export function parseExcelRowsUniversally(
     let rawComply: unknown = undefined;
     let rawComply24: unknown = undefined;
 
-    if (category === 'SIP TRUNK' || category === 'DWDM') {
+    if (category === 'SIP TRUNK') {
       rawId = row[1] || row[0] || (idCol !== -1 ? row[idCol] : undefined);
       rawCust = row[2] || (custCol !== -1 ? row[custCol] : undefined);
-      rawSid = row[12] || row[11] || (serviceIdCol !== -1 ? row[serviceIdCol] : undefined);
+      rawSid = row[11] || row[12] || (serviceIdCol !== -1 ? row[serviceIdCol] : undefined);
       rawSto = row[35] || (stoCol !== -1 ? row[stoCol] : undefined);
-      rawTtr = row[54] || row[53] || (ttrCol !== -1 ? row[ttrCol] : undefined);
-      rawDate = row[18] || row[59] || (dateCol !== -1 ? row[dateCol] : undefined);
+      rawTtr = row[63] !== undefined && row[63] !== '' ? row[63] : row[53];
+      rawDate = row[18] || (dateCol !== -1 ? row[dateCol] : undefined);
+      rawComply = row[52];
+    } else if (category === 'DWDM') {
+      rawId = row[1] || row[0] || (idCol !== -1 ? row[idCol] : undefined);
+      rawCust = row[2] || (custCol !== -1 ? row[custCol] : undefined);
+      rawSid = row[11] || row[12] || (serviceIdCol !== -1 ? row[serviceIdCol] : undefined);
+      rawSto = row[35] || (stoCol !== -1 ? row[stoCol] : undefined);
+      rawTtr = row[64] !== undefined && row[64] !== '' ? row[64] : row[53];
+      rawDate = row[18] || (dateCol !== -1 ? row[dateCol] : undefined);
       rawComply = row[52];
     } else if (category === 'DATIN') {
       // GAS: colTiket=0, colCustomer=2, colSid=11, colTtr=25, colWorkzone=36, colKategori=64, colComply=67, colTanggal=73, colGaul=75
@@ -198,7 +206,6 @@ export function parseExcelRowsUniversally(
       rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[6];
       rawSto = (stoCol !== -1 ? row[stoCol] : undefined) || row[24];
       rawDate = (dateCol !== -1 ? row[dateCol] : undefined) || row[1];
-      rawComply = row[26];
     } else if (category === 'OUTHSI' || category === 'OUTDATIN') {
       rawId = (idCol !== -1 ? row[idCol] : undefined) || row[2] || row[0];
       rawCust = (custCol !== -1 ? row[custCol] : undefined) || row[23] || row[24];

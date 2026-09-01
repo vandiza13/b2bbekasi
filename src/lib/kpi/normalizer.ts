@@ -116,7 +116,7 @@ export function parseDateSafe(dateRaw: unknown): Date | null {
     const [datePart, timePart] = str.split(' ');
     const sep = datePart.includes('/') ? '/' : '-';
     const parts = datePart.split(sep).map(Number);
-    if (parts.length === 3) {
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
       let [p1, p2, p3] = parts;
       const [hr, min, sec] = timePart ? timePart.split(':').map(Number) : [0, 0, 0];
 
@@ -137,7 +137,7 @@ export function parseDateSafe(dateRaw: unknown): Date | null {
       }
 
       const parsed = new Date(Date.UTC(y, m - 1, d, hr || 0, min || 0, sec || 0));
-      return isNaN(parsed.getTime()) ? null : parsed;
+      if (!isNaN(parsed.getTime())) return parsed;
     }
   }
 

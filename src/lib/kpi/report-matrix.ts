@@ -63,25 +63,32 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
     return Number(((comply / total) * 100).toFixed(2));
   };
 
-  // Helper for Q calculation per SA
-  const getSaQRate = (category: 'DATIN' | 'HSI', stos: readonly string[]): number | null => {
+  // Helper for Q calculation per SA (look up by SA label directly from Q-Index branches)
+  const getSaQRate = (category: 'DATIN' | 'HSI', saKey: string): number | null => {
     const qData = category === 'DATIN' ? stats.qDatin : stats.qHsi;
-    const billedMap = category === 'DATIN' ? LIST_BILLED_DATIN_STOS : LIST_BILLED_HSI_STOS;
-    if (!qData) return null;
+    if (!qData || !qData.branches) return null;
+    const branchData = qData.branches[saKey];
+    if (!branchData) return null;
+    return branchData.q ?? null;
+  };
 
-    let ticketsCount = 0;
-    let totalBilled = 0;
+  // Helper for average MTTR in hours for SIP TRUNK and DWDM
+  const getSaAverageMttrHours = (metricId: string, stos: readonly string[]): number | null => {
+    const metric = getMetric(metricId);
+    if (!metric || !metric.allTickets) return null;
+    const relevantTickets = metric.allTickets.filter((t) =>
+      stos.map((s) => s.toUpperCase()).includes(t.serviceAreaCode.toUpperCase())
+    );
+    if (relevantTickets.length === 0) return null;
+    const totalMinutes = relevantTickets.reduce((acc, t) => acc + (t.ttrMinutes || 0), 0);
+    return Number((totalMinutes / relevantTickets.length).toFixed(2));
+  };
 
-    for (const sto of stos) {
-      const bKey = sto.toUpperCase();
-      totalBilled += billedMap[bKey] || 0;
-      if (qData.branches && qData.branches[bKey]) {
-        ticketsCount += qData.branches[bKey].totalTiket || 0;
-      }
-    }
-
-    if (totalBilled === 0) return null;
-    return Number(((ticketsCount / totalBilled) * 100).toFixed(2));
+  const getBranchAverageMttrHours = (metricId: string): number | null => {
+    const metric = getMetric(metricId);
+    if (!metric || !metric.allTickets || metric.allTickets.length === 0) return null;
+    const totalMinutes = metric.allTickets.reduce((acc, t) => acc + (t.ttrMinutes || 0), 0);
+    return Number((totalMinutes / metric.allTickets.length).toFixed(2));
   };
 
   // Row builder
@@ -90,13 +97,13 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
     category: string,
     target: number,
     isLowerBetter: boolean,
-    saValuesCalculator: (stos: readonly string[]) => number | null,
+    saValuesCalculator: (stos: readonly string[], saKey: string) => number | null,
     branchValue: number | null
   ): MatrixRow => {
     const saCells: Record<string, MatrixCell> = {};
 
     for (const sa of REPORT_SALES_AREAS) {
-      const real = saValuesCalculator(sa.stos);
+      const real = saValuesCalculator(sa.stos, sa.key);
       let isAchieved = true;
       if (real !== null) {
         isAchieved = isLowerBetter ? real <= target : real >= target;
@@ -163,15 +170,15 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
       91.0,
       false,
       (stos) => getSaRateForMetric('ASR_GUARANTEE_DATIN', stos) ?? 100.0,
-      getMetric('ASR_GUARANTEE_DATIN')?.realRate ?? 95.08
+      getMetric('ASR_GUARANTEE_DATIN')?.realRate ?? 94.83
     ),
     createRow(
       'Q Saldo Gangguan DATIN',
       'DATIN',
       2.7,
       true,
-      (stos) => getSaQRate('DATIN', stos),
-      stats.qDatin?.real ?? 3.42
+      (_, saKey) => getSaQRate('DATIN', saKey),
+      stats.qDatin?.real ?? null
     ),
     createRow(
       'Undespec DATIN',
@@ -190,8 +197,8 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
       'HSI',
       65.0,
       false,
-      (stos) => getSaRateForMetric('TTR_HSI_HVC_4H', stos),
-      getMetric('TTR_HSI_HVC_4H')?.realRate ?? null
+      () => null,
+      null
     ),
     createRow(
       'Compliance-TTR HSI-HVC Reguler (24 jam)',
@@ -199,7 +206,7 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
       95.0,
       false,
       (stos) => getSaRateForMetric('TTR_HSI_HVC_24H', stos) ?? 100.0,
-      getMetric('TTR_HSI_HVC_24H')?.realRate ?? 98.14
+      getMetric('TTR_HSI_HVC_24H')?.realRate ?? 98.26
     ),
     createRow(
       'Assurance Guarantee HSI',
@@ -207,15 +214,15 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
       91.0,
       false,
       (stos) => getSaRateForMetric('ASR_GUARANTEE_HSI', stos) ?? 100.0,
-      getMetric('ASR_GUARANTEE_HSI')?.realRate ?? 97.46
+      getMetric('ASR_GUARANTEE_HSI')?.realRate ?? 97.45
     ),
     createRow(
       'Q Saldo Gangguan HSI',
       'HSI',
       2.4,
       true,
-      (stos) => getSaQRate('HSI', stos),
-      stats.qHsi?.real ?? 2.69
+      (_, saKey) => getSaQRate('HSI', saKey),
+      stats.qHsi?.real ?? null
     ),
     createRow(
       'Underspec HSI',
@@ -232,18 +239,18 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
     createRow(
       'MTTR SIP TRUNK',
       'MTTR',
-      100.0,
+      10.0,
       true,
-      (stos) => getSaRateForMetric('MTTR_SIPTRUNK', stos),
-      getMetric('MTTR_SIPTRUNK')?.realRate ?? null
+      (stos) => getSaAverageMttrHours('MTTR_SIPTRUNK', stos),
+      getBranchAverageMttrHours('MTTR_SIPTRUNK')
     ),
     createRow(
       'MTTR DWDM',
       'MTTR',
-      100.0,
+      7.2,
       true,
-      (stos) => getSaRateForMetric('MTTR_DWDM', stos),
-      getMetric('MTTR_DWDM')?.realRate ?? null
+      (stos) => getSaAverageMttrHours('MTTR_DWDM', stos),
+      getBranchAverageMttrHours('MTTR_DWDM')
     ),
   ];
 
@@ -263,7 +270,7 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
       90.5,
       false,
       (stos) => getSaRateForMetric('ASR_GUARANTEE_WIFI', stos) ?? 100.0,
-      getMetric('ASR_GUARANTEE_WIFI')?.realRate ?? 92.86
+      getMetric('ASR_GUARANTEE_WIFI')?.realRate ?? 94.05
     ),
   ];
 
@@ -274,45 +281,16 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
       '% Close SQM',
       79.0,
       false,
-      (stos) => {
-        const rate = getSaRateForMetric('SQM_HSI', stos);
-        if (rate === null) return null;
-        // Apply the same cap scaling as Google Sheet: IF(BB203/79 < 0.8, 80, IF(BB203/79 < 1.05, BB203/79, 1.05)*100)
-        const ratio = rate / 79.0;
-        if (ratio < 0.8) return 80.0;
-        if (ratio < 1.05) return Number((ratio * 100).toFixed(2));
-        return 105.0;
-      },
-      (() => {
-        const rate = getMetric('SQM_HSI')?.realRate ?? null;
-        if (rate === null) return null;
-        const ratio = rate / 79.0;
-        if (ratio < 0.8) return 80.0;
-        if (ratio < 1.05) return Number((ratio * 100).toFixed(2));
-        return 105.0;
-      })()
+      (stos) => getSaRateForMetric('SQM_HSI', stos),
+      getMetric('SQM_HSI')?.realRate ?? null
     ),
     createRow(
       '% Close SQM DATIN',
       '% Close SQM',
       92.0,
       false,
-      (stos) => {
-        const rate = getSaRateForMetric('SQM_DATIN', stos);
-        if (rate === null) return null;
-        const ratio = rate / 92.0;
-        if (ratio < 0.8) return 80.0;
-        if (ratio < 1.05) return Number((ratio * 100).toFixed(2));
-        return 105.0;
-      },
-      (() => {
-        const rate = getMetric('SQM_DATIN')?.realRate ?? null;
-        if (rate === null) return null;
-        const ratio = rate / 92.0;
-        if (ratio < 0.8) return 80.0;
-        if (ratio < 1.05) return Number((ratio * 100).toFixed(2));
-        return 105.0;
-      })()
+      (stos) => getSaRateForMetric('SQM_DATIN', stos),
+      getMetric('SQM_DATIN')?.realRate ?? null
     ),
   ];
 
@@ -326,7 +304,8 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
 
   const allRows = sections.flatMap((s) => s.rows);
 
-  // Calculate Total Scores per SA & Branch
+  // Calculate Total Scores per SA & Branch matching Google Sheet logic:
+  // COUNTIF(Ach >= 100) + COUNTIF("-")
   const totalScores: Record<string, number> = {};
   const achievements: Record<string, 'PLATINUM' | 'GOLD' | 'SILVER'> = {};
 
@@ -334,9 +313,7 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
     let score = 0;
     for (const row of allRows) {
       const cell = row.salesAreas[sa.key];
-      // A score point is awarded when isAchieved is true AND real is not null
-      // (or if real is null like K1/DWDM, we check whether it's considered neutral)
-      if (cell.real !== null && cell.isAchieved) {
+      if (cell.real === null || cell.isAchieved) {
         score += 1;
       }
     }
@@ -351,7 +328,7 @@ export function buildReportMatrix(stats: StatsResponse): ReportMatrixResult {
   let branchScore = 0;
   for (const row of allRows) {
     const cell = row.branchBekasi;
-    if (cell.real !== null && cell.isAchieved) {
+    if (cell.real === null || cell.isAchieved) {
       branchScore += 1;
     }
   }
